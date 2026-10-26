@@ -1,7 +1,8 @@
 import { useEffect, type ReactNode } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { az } from '../i18n/az';
-import { useAppData } from '../state/hooks';
+import { useSettledTransition } from '../state/celebration';
+import { useAppData, useOverallSummary } from '../state/hooks';
 import { CalendarIcon, ClockIcon, HomeIcon, SettingsIcon } from './icons';
 
 const tabs: { to: string; label: string; icon: ReactNode; end?: boolean }[] = [
@@ -22,6 +23,8 @@ function ScrollToTop() {
 /** App shell: brand header, page outlet, bottom tab bar (mobile) / top nav (desktop). */
 export function AppLayout() {
   const { status } = useAppData();
+  const { settled } = useOverallSummary();
+  const celebration = useSettledTransition(settled, status === 'ready');
 
   return (
     <div className="min-h-dvh pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
@@ -65,7 +68,7 @@ export function AppLayout() {
             {az.app.loadError}
           </p>
         )}
-        {status === 'ready' && <Outlet />}
+        {status === 'ready' && <Outlet context={celebration} />}
       </main>
 
       <nav

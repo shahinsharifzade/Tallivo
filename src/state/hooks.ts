@@ -39,10 +39,13 @@ export function useOverallSummary() {
   const { members, expenses, settlements } = useAppData();
   return useMemo(() => {
     const balances = computeBalances(members, expenses, settlements);
+    const transfers = simplifyDebts(balances, members);
     return {
       balances,
-      transfers: simplifyDebts(balances, members),
+      transfers,
       totalSpentMinor: totalSpent(expenses),
+      /** At least one expense exists and nobody owes anything. */
+      settled: expenses.some((e) => !e.deletedAt) && Object.values(balances).every((v) => v === 0),
     };
   }, [members, expenses, settlements]);
 }

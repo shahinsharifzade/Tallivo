@@ -57,6 +57,8 @@ export const az = {
     balancesHint: 'Bütün görüşlər və ödənişlər birlikdə.',
     transfersTitle: 'Kim kimə ödəməlidir',
     allSettled: 'Hamının hesabı bərabərdir.',
+    settledTitle: 'Hesab bərabər!',
+    settledBody: 'Heç kim heç kimə borclu deyil. Növbəti görüşə qədər!',
     recordPayment: 'Ödəniş qeyd et',
     recordTransferLabel: (from: string, to: string, amount: string) =>
       `${from} → ${to} ${amount}: ödənişi qeyd et`,
