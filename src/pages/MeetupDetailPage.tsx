@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Avatar } from '../components/Avatar';
-import { BalanceList } from '../components/BalanceList';
+import { BalanceBars } from '../components/BalanceBars';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PencilIcon, PlusIcon, TrashIcon } from '../components/icons';
 import { buttonClass } from '../components/styles';
@@ -169,7 +169,7 @@ export function MeetupDetailPage() {
 
               <Card>
                 <SectionTitle hint={t.balancesHint}>{t.balancesTitle}</SectionTitle>
-                <BalanceList
+                <BalanceBars
                   members={members}
                   balances={summary.balances}
                   onlyIds={summary.involvedMemberIds}

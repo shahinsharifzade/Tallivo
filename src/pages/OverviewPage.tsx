@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BalanceList } from '../components/BalanceList';
+import { BalanceBars } from '../components/BalanceBars';
 import { PlusIcon } from '../components/icons';
 import { buttonClass } from '../components/styles';
 import { TransferList } from '../components/TransferList';
@@ -47,7 +47,7 @@ export function OverviewPage() {
 
       <Card>
         <SectionTitle hint={az.overview.balancesHint}>{az.overview.balancesTitle}</SectionTitle>
-        <BalanceList members={members} balances={balances} />
+        <BalanceBars members={members} balances={balances} />
       </Card>
 
       <Card>

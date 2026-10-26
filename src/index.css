@@ -90,6 +90,16 @@
   .chip-pop {
     animation: chip-pop 180ms ease-out;
   }
+  /* Grows from scaleX(0) to the element's own transform (set inline). */
+  .bar-grow {
+    animation: bar-grow 300ms ease-out both;
+  }
+}
+
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
 }
 
 @keyframes chip-pop {
