@@ -24,6 +24,7 @@ function ScrollToTop() {
 /** App shell: brand header, page outlet, bottom tab bar (mobile) / top nav (desktop). */
 export function AppLayout() {
   const { status } = useAppData();
+  const { pathname } = useLocation();
   const { settled } = useOverallSummary();
   const celebration = useSettledTransition(settled, status === 'ready');
 
@@ -72,7 +73,12 @@ export function AppLayout() {
             {az.app.loadError}
           </p>
         )}
-        {status === 'ready' && <Outlet context={celebration} />}
+        {status === 'ready' && (
+          // Keyed by path so each screen gets the short fade/slide entrance.
+          <div key={pathname} className="page-in">
+            <Outlet context={celebration} />
+          </div>
+        )}
       </main>
 
       <nav

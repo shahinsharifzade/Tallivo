@@ -20,7 +20,7 @@ export function TransferCards({ transfers, members, emptyText, linkFor }: Transf
   const memberOf = (id: string) => members.find((m) => m.id === id);
 
   return (
-    <ul className="space-y-2">
+    <ul className="stagger space-y-2">
       {transfers.map((t) => {
         const from = memberOf(t.fromMemberId);
         const to = memberOf(t.toMemberId);

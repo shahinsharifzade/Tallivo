@@ -120,7 +120,7 @@ export function MeetupDetailPage() {
             <>
               <Card>
                 <SectionTitle>{t.expensesTitle}</SectionTitle>
-                <ul className="divide-y divide-line">
+                <ul className="stagger divide-y divide-line">
                   {expenses.map((expense) => (
                     <li key={expense.id} className="flex items-start gap-3 py-3">
                       <Avatar member={memberOf(expense.paidByMemberId)} className="mt-0.5" />

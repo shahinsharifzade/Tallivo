@@ -24,7 +24,7 @@ export function MeetupsPage() {
       {items.length === 0 ? (
         <EmptyState title={az.meetups.emptyTitle} body={az.meetups.emptyBody} action={newButton} />
       ) : (
-        <ul className="space-y-2">
+        <ul className="stagger space-y-2">
           {items.map(({ meetup, totalSpentMinor, participants, expenseCount }) => (
             <li key={meetup.id}>
               <Link

@@ -19,7 +19,7 @@ export function BalanceBars({ members, balances, onlyIds }: BalanceBarsProps) {
   const maxAbs = Math.max(0, ...rows.map((m) => Math.abs(balances[m.id] ?? 0)));
 
   return (
-    <ul className="space-y-3">
+    <ul className="stagger space-y-3">
       {rows.map((m) => {
         const value = balances[m.id] ?? 0;
         const ratio = maxAbs === 0 ? 0 : Math.abs(value) / maxAbs;

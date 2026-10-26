@@ -104,7 +104,7 @@ export function HistoryPage() {
       {items.length === 0 ? (
         <EmptyState title={t.emptyTitle} body={t.emptyBody} />
       ) : (
-        <ul className="space-y-2">
+        <ul className="stagger space-y-2">
           {items.map((entry) => {
             const deleted = !!entry.item.deletedAt;
             const amount =
