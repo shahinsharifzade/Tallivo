@@ -4,11 +4,13 @@ import { Avatar } from '../components/Avatar';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ArrowRightIcon } from '../components/icons';
 import { buttonClass } from '../components/styles';
+import { SwipeToDelete } from '../components/SwipeToDelete';
 import { Badge, EmptyState, ErrorText, PageHeader } from '../components/ui';
 import { formatMoney, type Settlement } from '../domain';
 import { az } from '../i18n/az';
 import { formatDate } from '../lib/format';
 import { useActions, useAppData, useHistory, type HistoryItem } from '../state/hooks';
+import { useFeedback } from '../state/feedback';
 import { useSubmit } from '../state/useSubmit';
 
 const t = az.history;
@@ -18,6 +20,7 @@ export function HistoryPage() {
   const { members } = useAppData();
   const actions = useActions();
   const { error, run } = useSubmit();
+  const feedback = useFeedback();
   const [settlementToDelete, setSettlementToDelete] = useState<Settlement | null>(null);
   const memberOf = (id: string) => members.find((m) => m.id === id);
   const nameOf = (id: string) => memberOf(id)?.name ?? '?';
@@ -28,6 +31,13 @@ export function HistoryPage() {
       if (entry.kind === 'settlement') return actions.restoreSettlement(entry.item.id);
       return actions.restoreMeetup(entry.item.id);
     });
+
+  const swipeDeleteSettlement = async (s: Settlement) => {
+    if (await run(() => actions.deleteSettlement(s.id))) {
+      const label = `${nameOf(s.fromMemberId)} → ${nameOf(s.toMemberId)}`;
+      feedback.undoable(az.feedback.deleted(label), () => actions.restoreSettlement(s.id));
+    }
+  };
 
   const deleteSettlement = async () => {
     const s = settlementToDelete;
@@ -113,15 +123,8 @@ export function HistoryPage() {
                 : entry.kind === 'settlement'
                   ? entry.item.amountMinor
                   : null;
-            return (
-              <li
-                key={`${entry.kind}-${entry.item.id}`}
-                className={`rounded-card p-4 ring-1 ${
-                  deleted
-                    ? 'bg-surface-2 text-ink-muted ring-line'
-                    : 'bg-surface shadow-card ring-line'
-                }`}
-              >
+            const card = (
+              <>
                 <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-ink-muted">
                   {kindLabel[entry.kind]}
                   {deleted && <Badge>{az.common.deleted}</Badge>}
@@ -158,6 +161,31 @@ export function HistoryPage() {
                       </button>
                     </div>
                   )
+                )}
+              </>
+            );
+            return (
+              <li key={`${entry.kind}-${entry.item.id}`}>
+                {entry.kind === 'settlement' && !deleted ? (
+                  <SwipeToDelete
+                    className="rounded-card shadow-card"
+                    label={az.common.delete}
+                    onDelete={() => swipeDeleteSettlement(entry.item)}
+                  >
+                    <div className="rounded-card bg-surface p-4 ring-1 ring-inset ring-line">
+                      {card}
+                    </div>
+                  </SwipeToDelete>
+                ) : (
+                  <div
+                    className={`rounded-card p-4 ring-1 ${
+                      deleted
+                        ? 'bg-surface-2 text-ink-muted ring-line'
+                        : 'bg-surface shadow-card ring-line'
+                    }`}
+                  >
+                    {card}
+                  </div>
                 )}
               </li>
             );

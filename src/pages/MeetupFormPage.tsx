@@ -6,6 +6,7 @@ import { isIsoDate } from '../domain';
 import { az } from '../i18n/az';
 import { todayIso } from '../lib/dates';
 import { useActions, useMeetup } from '../state/hooks';
+import { useFeedback } from '../state/feedback';
 import { useSubmit } from '../state/useSubmit';
 import { NotFoundPage } from './NotFoundPage';
 
@@ -26,6 +27,7 @@ function MeetupForm({
 }) {
   const actions = useActions();
   const navigate = useNavigate();
+  const feedback = useFeedback();
   const { pending, error, run } = useSubmit();
   const [title, setTitle] = useState(initial?.title ?? '');
   const [date, setDate] = useState(initial?.date ?? todayIso());
@@ -45,7 +47,9 @@ function MeetupForm({
       if (meetupId) await actions.updateMeetup(meetupId, input);
       else targetId = (await actions.createMeetup(input)).id;
     });
-    if (ok && targetId) navigate(`/meetups/${targetId}`, { replace: true });
+    if (!ok || !targetId) return;
+    feedback.saved();
+    navigate(`/meetups/${targetId}`, { replace: true });
   };
 
   const backTo = meetupId ? `/meetups/${meetupId}` : '/meetups';

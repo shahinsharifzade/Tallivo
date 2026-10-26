@@ -9,6 +9,7 @@ import { az } from '../i18n/az';
 import { todayIso } from '../lib/dates';
 import { moneyErrorMessage } from '../lib/errors';
 import { useActions, useAppData } from '../state/hooks';
+import { useFeedback } from '../state/feedback';
 import { useSubmit } from '../state/useSubmit';
 
 const t = az.paymentForm;
@@ -19,6 +20,7 @@ export function PaymentFormPage() {
   const { members } = useAppData();
   const actions = useActions();
   const navigate = useNavigate();
+  const feedback = useFeedback();
   const { pending, error, run } = useSubmit();
 
   const memberParam = (key: string): Id | null => {
@@ -52,7 +54,9 @@ export function PaymentFormPage() {
         note,
       });
     });
-    if (ok) navigate('/', { replace: true });
+    if (!ok) return;
+    feedback.saved();
+    navigate('/', { replace: true });
   };
 
   return (

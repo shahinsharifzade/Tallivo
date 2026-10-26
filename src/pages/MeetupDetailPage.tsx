@@ -5,12 +5,14 @@ import { BalanceBars } from '../components/BalanceBars';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PencilIcon, PlusIcon, TrashIcon } from '../components/icons';
 import { buttonClass } from '../components/styles';
+import { SwipeToDelete } from '../components/SwipeToDelete';
 import { TransferCards } from '../components/TransferCards';
 import { Card, EmptyState, ErrorText, PageHeader, SectionTitle } from '../components/ui';
 import { formatMoney, type Expense } from '../domain';
 import { az } from '../i18n/az';
 import { formatDate } from '../lib/format';
 import { useActions, useAppData, useMeetup, useMeetupSummary } from '../state/hooks';
+import { useFeedback } from '../state/feedback';
 import { useSubmit } from '../state/useSubmit';
 import { NotFoundPage } from './NotFoundPage';
 
@@ -24,6 +26,7 @@ export function MeetupDetailPage() {
   const { meetup, expenses } = useMeetup(meetupId);
   const summary = useMeetupSummary(meetupId);
   const { error, run } = useSubmit();
+  const feedback = useFeedback();
   const [confirmDeleteMeetup, setConfirmDeleteMeetup] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
 
@@ -36,6 +39,14 @@ export function MeetupDetailPage() {
   const deleteMeetup = async () => {
     setConfirmDeleteMeetup(false);
     if (await run(() => actions.deleteMeetup(meetup.id))) navigate('/meetups', { replace: true });
+  };
+
+  const swipeDeleteExpense = async (expense: Expense) => {
+    if (await run(() => actions.deleteExpense(expense.id))) {
+      feedback.undoable(az.feedback.deleted(expense.title), () =>
+        actions.restoreExpense(expense.id),
+      );
+    }
   };
 
   const deleteExpense = async () => {
@@ -119,49 +130,56 @@ export function MeetupDetailPage() {
           ) : (
             <>
               <Card>
-                <SectionTitle>{t.expensesTitle}</SectionTitle>
+                <SectionTitle hint={az.feedback.swipeHint}>{t.expensesTitle}</SectionTitle>
                 <ul className="stagger divide-y divide-line">
                   {expenses.map((expense) => (
-                    <li key={expense.id} className="flex items-start gap-3 py-3">
-                      <Avatar member={memberOf(expense.paidByMemberId)} className="mt-0.5" />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline justify-between gap-3">
-                          <p className="truncate font-medium">{expense.title}</p>
-                          <p className="tabular shrink-0 font-semibold">
-                            {formatMoney(expense.totalMinor)}
-                          </p>
+                    <li key={expense.id}>
+                      <SwipeToDelete
+                        label={az.common.delete}
+                        onDelete={() => swipeDeleteExpense(expense)}
+                      >
+                        <div className="flex items-start gap-3 bg-surface py-3">
+                          <Avatar member={memberOf(expense.paidByMemberId)} className="mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-baseline justify-between gap-3">
+                              <p className="truncate font-medium">{expense.title}</p>
+                              <p className="tabular shrink-0 font-semibold">
+                                {formatMoney(expense.totalMinor)}
+                              </p>
+                            </div>
+                            <p className="text-sm text-ink-muted">
+                              {t.paidBy(nameOf(expense.paidByMemberId))}
+                            </p>
+                            <p className="tabular text-sm text-ink-muted">
+                              {expense.shares
+                                .map((s) => `${nameOf(s.memberId)} ${formatMoney(s.amountMinor)}`)
+                                .join(' · ')}
+                            </p>
+                            {expense.note && (
+                              <p className="text-sm italic text-ink-muted">{expense.note}</p>
+                            )}
+                          </div>
+                          <div className="flex shrink-0">
+                            <Link
+                              to={`/meetups/${meetup.id}/expenses/${expense.id}/edit`}
+                              className={buttonClass('ghost', 'px-3')}
+                              aria-label={`${az.common.edit}: ${expense.title}`}
+                              title={az.common.edit}
+                            >
+                              <PencilIcon />
+                            </Link>
+                            <button
+                              type="button"
+                              className={buttonClass('danger', 'px-3')}
+                              onClick={() => setExpenseToDelete(expense)}
+                              aria-label={`${az.common.delete}: ${expense.title}`}
+                              title={az.common.delete}
+                            >
+                              <TrashIcon />
+                            </button>
+                          </div>
                         </div>
-                        <p className="text-sm text-ink-muted">
-                          {t.paidBy(nameOf(expense.paidByMemberId))}
-                        </p>
-                        <p className="tabular text-sm text-ink-muted">
-                          {expense.shares
-                            .map((s) => `${nameOf(s.memberId)} ${formatMoney(s.amountMinor)}`)
-                            .join(' · ')}
-                        </p>
-                        {expense.note && (
-                          <p className="text-sm italic text-ink-muted">{expense.note}</p>
-                        )}
-                      </div>
-                      <div className="flex shrink-0">
-                        <Link
-                          to={`/meetups/${meetup.id}/expenses/${expense.id}/edit`}
-                          className={buttonClass('ghost', 'px-3')}
-                          aria-label={`${az.common.edit}: ${expense.title}`}
-                          title={az.common.edit}
-                        >
-                          <PencilIcon />
-                        </Link>
-                        <button
-                          type="button"
-                          className={buttonClass('danger', 'px-3')}
-                          onClick={() => setExpenseToDelete(expense)}
-                          aria-label={`${az.common.delete}: ${expense.title}`}
-                          title={az.common.delete}
-                        >
-                          <TrashIcon />
-                        </button>
-                      </div>
+                      </SwipeToDelete>
                     </li>
                   ))}
                 </ul>

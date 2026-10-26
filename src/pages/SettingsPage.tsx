@@ -10,6 +10,7 @@ import { az } from '../i18n/az';
 import { MEMBER_PALETTE, memberColor } from '../lib/memberColors';
 import { setThemePreference, useThemePreference, type ThemePreference } from '../lib/theme';
 import { useActions, useAppData, useReferencedMemberIds } from '../state/hooks';
+import { useFeedback } from '../state/feedback';
 import { useSubmit } from '../state/useSubmit';
 
 const t = az.settings;
@@ -161,6 +162,7 @@ export function SettingsPage() {
   const referenced = useReferencedMemberIds();
   const actions = useActions();
   const addSubmit = useSubmit();
+  const feedback = useFeedback();
   const generalSubmit = useSubmit();
   const [newName, setNewName] = useState('');
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
@@ -174,7 +176,10 @@ export function SettingsPage() {
       addSubmit.setError(t.nameErrors[problem]);
       return;
     }
-    if (await addSubmit.run(async () => void (await actions.addMember(newName)))) setNewName('');
+    if (await addSubmit.run(async () => void (await actions.addMember(newName)))) {
+      setNewName('');
+      feedback.saved();
+    }
   };
 
   const deleteMember = async () => {

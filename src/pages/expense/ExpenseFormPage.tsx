@@ -9,6 +9,7 @@ import { Card, ErrorText, Field, FieldGroup, PageHeader } from '../../components
 import { formatMoney, type Expense, type Id, type Member } from '../../domain';
 import { az } from '../../i18n/az';
 import { useActions, useAppData, useMeetup } from '../../state/hooks';
+import { useFeedback } from '../../state/feedback';
 import { useSubmit } from '../../state/useSubmit';
 import { NotFoundPage } from '../NotFoundPage';
 import {
@@ -55,6 +56,7 @@ function ExpenseForm({
 }) {
   const actions = useActions();
   const navigate = useNavigate();
+  const feedback = useFeedback();
   const { pending, error, run } = useSubmit();
   const [draft, setDraft] = useState<ExpenseDraft>(() =>
     expense ? draftFromExpense(expense, members) : newDraft(members),
@@ -91,7 +93,9 @@ function ExpenseForm({
       if (expense) await actions.updateExpense(expense.id, input);
       else await actions.createExpense(input);
     });
-    if (ok) navigate(backTo, { replace: true });
+    if (!ok) return;
+    feedback.saved();
+    navigate(backTo, { replace: true });
   };
 
   return (

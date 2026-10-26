@@ -201,6 +201,12 @@ export const az = {
     tooManyDecimals: 'Ən çoxu 2 onluq rəqəm (qəpik).',
     tooLarge: 'Məbləğ çox böyükdür.',
   },
+  feedback: {
+    saved: 'Yadda saxlanıldı',
+    undo: 'Geri qaytar',
+    deleted: (name: string) => `«${name}» silindi`,
+    swipeHint: 'Silmək üçün sola sürüşdürün.',
+  },
   notFound: {
     title: 'Səhifə tapılmadı',
     home: 'Ana səhifəyə qayıt',
