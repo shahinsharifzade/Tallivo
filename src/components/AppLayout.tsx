@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { az } from '../i18n/az';
 import { useSettledTransition } from '../state/celebration';
 import { useAppData, useOverallSummary } from '../state/hooks';
+import { Logo } from './Logo';
 import { CalendarIcon, ClockIcon, HomeIcon, SettingsIcon } from './icons';
 
 const tabs: { to: string; label: string; icon: ReactNode; end?: boolean }[] = [
@@ -31,9 +32,12 @@ export function AppLayout() {
       <ScrollToTop />
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-4 py-3">
-          <NavLink to="/" className="flex items-baseline gap-2 rounded-lg">
-            <span className="text-lg font-bold text-accent-ink">{az.app.name}</span>
-            <span className="text-sm text-ink-muted">{az.app.tagline}</span>
+          <NavLink
+            to="/"
+            aria-label={az.app.name}
+            className="rounded-control focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            <Logo />
           </NavLink>
           <nav aria-label={az.nav.label} className="hidden md:block">
             <ul className="flex gap-1">

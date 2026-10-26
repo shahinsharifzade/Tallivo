@@ -7,7 +7,10 @@ import '@fontsource/inter/700.css';
 import './index.css';
 import { App } from './App';
 import { LocalStorageRepository } from './data/localStorageRepository';
+import { initTheme } from './lib/theme';
 import { AppDataProvider } from './state/AppDataProvider';
+
+initTheme();
 
 // The only place that picks a concrete storage backend.
 const repository = new LocalStorageRepository();

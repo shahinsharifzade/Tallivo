@@ -1,1 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#0f766e"/><path d="M9 11h14M16 11v12M10 18h4M18 18h4" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    .bg { fill: #0f766e; }
+    .fg { fill: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #2dd4bf; }
+      .fg { fill: #042f2e; }
+    }
+  </style>
+  <rect class="bg" width="32" height="32" rx="9"/>
+  <rect class="fg" x="8.5" y="10.5" width="15" height="4" rx="2"/>
+  <rect class="fg" x="8.5" y="17.5" width="15" height="4" rx="2"/>
+</svg>

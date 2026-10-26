@@ -8,6 +8,7 @@ import { Badge, Card, ErrorText, SectionTitle, PageHeader } from '../components/
 import { MAX_NAME_LENGTH, validateMemberName, type Member } from '../domain';
 import { az } from '../i18n/az';
 import { MEMBER_PALETTE, memberColor } from '../lib/memberColors';
+import { setThemePreference, useThemePreference, type ThemePreference } from '../lib/theme';
 import { useActions, useAppData, useReferencedMemberIds } from '../state/hooks';
 import { useSubmit } from '../state/useSubmit';
 
@@ -125,6 +126,36 @@ function MemberRow({
   );
 }
 
+function ThemeCard() {
+  const preference = useThemePreference();
+  const options: ThemePreference[] = ['system', 'light', 'dark'];
+  return (
+    <Card>
+      <SectionTitle hint={t.themeHint}>{t.themeTitle}</SectionTitle>
+      <div
+        role="radiogroup"
+        aria-label={t.themeTitle}
+        className="grid grid-cols-3 gap-1 rounded-control bg-surface-2 p-1"
+      >
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            role="radio"
+            aria-checked={preference === option}
+            onClick={() => setThemePreference(option)}
+            className={`min-h-11 rounded-lg font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+              preference === option ? 'bg-surface text-ink shadow-card' : 'text-ink-soft'
+            }`}
+          >
+            {t.themeOptions[option]}
+          </button>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 export function SettingsPage() {
   const { members } = useAppData();
   const referenced = useReferencedMemberIds();
@@ -200,6 +231,8 @@ export function SettingsPage() {
         </form>
         {addSubmit.error && <p className="mt-1 text-sm text-neg">{addSubmit.error}</p>}
       </Card>
+
+      <ThemeCard />
 
       <BackupPanel />
 
