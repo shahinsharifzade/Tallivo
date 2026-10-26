@@ -5,6 +5,40 @@ export const az = {
     name: 'Tallivo',
     tagline: 'Hesab bərabər.',
     comingSoon: 'Tezliklə burada ekranlar olacaq.',
+    loading: 'Yüklənir…',
+    loadError: 'Məlumatları yükləmək alınmadı. Səhifəni yeniləyin.',
+    dataCounts: (members: number, meetups: number, expenses: number, settlements: number) =>
+      `${members} üzv · ${meetups} görüş · ${expenses} xərc · ${settlements} ödəniş`,
+  },
+  common: {
+    cancel: 'Ləğv et',
+    confirm: 'Təsdiqlə',
+  },
+  backup: {
+    title: 'Ehtiyat nüsxə',
+    description: 'Məlumatlar yalnız bu brauzerdə saxlanılır. Vaxtaşırı JSON faylı kimi ixrac edin.',
+    export: 'JSON ixrac et',
+    import: 'JSON idxal et',
+    importConfirmTitle: 'Məlumatlar əvəz olunsun?',
+    importConfirmBody: (fileName: string) =>
+      `«${fileName}» faylı idxal ediləcək və hazırkı BÜTÜN məlumatlar onunla əvəz olunacaq.`,
+    importConfirm: 'İdxal et',
+    importSuccess: (meetups: number, expenses: number, settlements: number) =>
+      `İdxal edildi: ${meetups} görüş, ${expenses} xərc, ${settlements} ödəniş.`,
+    exportSuccess: 'Fayl yükləndi.',
+    fileNamePrefix: 'tallivo-ehtiyat',
+  },
+  errors: {
+    notFound: 'Qeyd tapılmadı. Səhifəni yeniləyin.',
+    storageWrite: 'Yadda saxlamaq alınmadı. Brauzerin yaddaşı dolu və ya bağlı ola bilər.',
+    memberInUse: 'Bu üzv xərc və ya ödənişlərdə iştirak edir, ona görə silinə bilməz.',
+    invalidMemberName: 'Ad boş, çox uzun və ya təkrar ola bilməz.',
+    invalidMeetup: 'Görüşün adı və tarixi düzgün olmalıdır.',
+    invalidExpense: 'Xərc düzgün deyil. Məbləği və iştirakçıları yoxlayın.',
+    invalidSettlement: 'Ödəniş düzgün deyil. Kimdən, kimə və məbləği yoxlayın.',
+    meetupDeleted: 'Bu görüş silinib. Əvvəlcə onu bərpa edin.',
+    importInvalid: 'Fayl oxunmadı: düzgün Tallivo ehtiyat nüsxəsi deyil.',
+    unknown: 'Gözlənilməz xəta baş verdi.',
   },
   debug: {
     title: 'Yoxlama səhifəsi',
