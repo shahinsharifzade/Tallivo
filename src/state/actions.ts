@@ -28,6 +28,7 @@ export interface ImportSummary {
 export interface AppActions {
   addMember(name: string): Promise<Member>;
   renameMember(id: Id, name: string): Promise<void>;
+  setMemberColor(id: Id, color: string): Promise<void>;
   deleteMember(id: Id): Promise<void>;
 
   createMeetup(input: MeetupInput): Promise<Meetup>;
@@ -106,6 +107,11 @@ export function createActions(repository: Repository, reload: () => Promise<void
       const members = await repository.listMembers();
       if (validateMemberName(name, members, id)) throw new AppError('invalidMemberName');
       await after(repository.updateMember(id, { name: name.trim() }));
+    },
+
+    async setMemberColor(id, color) {
+      if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new AppError('invalidMemberName', 'bad color');
+      await after(repository.updateMember(id, { color }));
     },
 
     async deleteMember(id) {

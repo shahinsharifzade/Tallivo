@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Avatar } from '../components/Avatar';
 import { BackupPanel } from '../components/BackupPanel';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { TrashIcon } from '../components/icons';
@@ -6,6 +7,7 @@ import { buttonClass, inputClass } from '../components/styles';
 import { Badge, Card, ErrorText, SectionTitle, PageHeader } from '../components/ui';
 import { MAX_NAME_LENGTH, validateMemberName, type Member } from '../domain';
 import { az } from '../i18n/az';
+import { MEMBER_PALETTE, memberColor } from '../lib/memberColors';
 import { useActions, useAppData, useReferencedMemberIds } from '../state/hooks';
 import { useSubmit } from '../state/useSubmit';
 
@@ -26,6 +28,8 @@ function MemberRow({
   const actions = useActions();
   const { error, setError, run } = useSubmit();
   const [name, setName] = useState(member.name);
+  const [pickingColor, setPickingColor] = useState(false);
+  const current = memberColor(member);
 
   const commit = async () => {
     if (name === member.name) return;
@@ -40,6 +44,16 @@ function MemberRow({
   return (
     <li className="py-2">
       <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setPickingColor((v) => !v)}
+          aria-expanded={pickingColor}
+          aria-label={t.colorLabel(member.name)}
+          title={t.colorLabel(member.name)}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent active:scale-95"
+        >
+          <Avatar member={member} size="lg" />
+        </button>
         <input
           className={inputClass}
           value={name}
@@ -75,6 +89,37 @@ function MemberRow({
           </button>
         )}
       </div>
+      {pickingColor && (
+        <div
+          role="radiogroup"
+          aria-label={t.colorLabel(member.name)}
+          className="mt-2 flex flex-wrap gap-1"
+        >
+          {MEMBER_PALETTE.map((color, i) => {
+            const checked = color.toLowerCase() === current.toLowerCase();
+            return (
+              <button
+                key={color}
+                type="button"
+                role="radio"
+                aria-checked={checked}
+                aria-label={t.colorNames[i]}
+                title={t.colorNames[i]}
+                onClick={() => {
+                  setPickingColor(false);
+                  if (!checked) void run(() => actions.setMemberColor(member.id, color));
+                }}
+                className="flex h-11 w-11 items-center justify-center rounded-full transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent active:scale-90"
+              >
+                <span
+                  style={{ backgroundColor: color }}
+                  className={`h-8 w-8 rounded-full ${checked ? 'ring-2 ring-ink ring-offset-2 ring-offset-surface' : ''}`}
+                />
+              </button>
+            );
+          })}
+        </div>
+      )}
       {error && <p className="mt-1 text-sm text-neg">{error}</p>}
     </li>
   );

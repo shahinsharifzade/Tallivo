@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Avatar } from '../components/Avatar';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ArrowRightIcon } from '../components/icons';
 import { buttonClass } from '../components/styles';
@@ -18,7 +19,8 @@ export function HistoryPage() {
   const actions = useActions();
   const { error, run } = useSubmit();
   const [settlementToDelete, setSettlementToDelete] = useState<Settlement | null>(null);
-  const nameOf = (id: string) => members.find((m) => m.id === id)?.name ?? '?';
+  const memberOf = (id: string) => members.find((m) => m.id === id);
+  const nameOf = (id: string) => memberOf(id)?.name ?? '?';
 
   const restore = (entry: HistoryItem) =>
     run(() => {
@@ -40,7 +42,8 @@ export function HistoryPage() {
         return (
           <>
             <p className="truncate font-medium">{e.title}</p>
-            <p className="text-sm text-ink-muted">
+            <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-ink-muted">
+              <Avatar member={memberOf(e.paidByMemberId)} size="xs" />
               {t.paidBy(nameOf(e.paidByMemberId))}
               {entry.meetup && (
                 <>
@@ -63,10 +66,12 @@ export function HistoryPage() {
         return (
           <>
             <p className="flex items-center gap-1.5 font-medium">
+              <Avatar member={memberOf(s.fromMemberId)} size="sm" />
               {nameOf(s.fromMemberId)}
               <span className="text-ink-muted">
                 <ArrowRightIcon />
               </span>
+              <Avatar member={memberOf(s.toMemberId)} size="sm" />
               {nameOf(s.toMemberId)}
             </p>
             <p className="text-sm text-ink-muted">

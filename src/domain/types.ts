@@ -15,6 +15,8 @@ export interface Member {
   id: Id;
   name: string;
   sortOrder: number;
+  /** Display color ("#rrggbb"). Optional: older data has none and gets a default by sortOrder. */
+  color?: string;
   createdAt: IsoDateTime;
 }
 

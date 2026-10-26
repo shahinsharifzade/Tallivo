@@ -154,6 +154,8 @@ export const az = {
     newMemberLabel: 'Yeni üzvün adı',
     newMemberPlaceholder: 'Ad',
     renameLabel: (name: string) => `${name} adını dəyiş`,
+    colorLabel: (name: string) => `${name} üçün rəng seçin`,
+    colorNames: ['Bənövşəyi', 'Mavi', 'Kəhrəba', 'Çəhrayı', 'İndiqo', 'Firuzəyi', 'Al', 'Zeytuni'],
     memberInUse: 'İstifadədədir',
     deleteMemberTitle: (name: string) => `${name} silinsin?`,
     nameErrors: {

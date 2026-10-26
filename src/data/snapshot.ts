@@ -62,6 +62,13 @@ function int(o: Obj, key: string, where: string): number {
   return v;
 }
 
+/** Optional "#rrggbb" color; anything else is invalid. */
+function hexColor(o: Obj, key: string, where: string): string | undefined {
+  const v = optStr(o, key, where);
+  if (v !== undefined && !/^#[0-9a-fA-F]{6}$/.test(v)) fail(`${where}.${key}: expected #rrggbb`);
+  return v;
+}
+
 function date(o: Obj, key: string, where: string): string {
   const v = str(o, key, where);
   if (!isIsoDate(v)) fail(`${where}.${key}: expected YYYY-MM-DD`);
@@ -82,6 +89,7 @@ function parseMember(value: unknown, i: number): Member {
     id: str(o, 'id', w),
     name: str(o, 'name', w),
     sortOrder: int(o, 'sortOrder', w),
+    color: hexColor(o, 'color', w),
     createdAt: str(o, 'createdAt', w),
   };
 }

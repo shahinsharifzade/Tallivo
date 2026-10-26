@@ -84,3 +84,35 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* ---- Motion. Only transform / opacity / colors are animated. ---- */
+@layer utilities {
+  .chip-pop {
+    animation: chip-pop 180ms ease-out;
+  }
+}
+
+@keyframes chip-pop {
+  0% {
+    transform: scale(0.92);
+  }
+  60% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Reduced motion: switch every animation and transition off (JS animations check this too). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

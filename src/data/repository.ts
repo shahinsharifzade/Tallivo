@@ -1,7 +1,7 @@
 import type { Expense, Id, IsoDateTime, Meetup, Member, Settlement } from '../domain';
 
 /** Fields the caller provides on create; the repository assigns id and timestamps. */
-export type MemberInput = Pick<Member, 'name' | 'sortOrder'>;
+export type MemberInput = Pick<Member, 'name' | 'sortOrder' | 'color'>;
 export type MeetupInput = Pick<Meetup, 'title' | 'date' | 'note'>;
 export type ExpenseInput = Pick<
   Expense,

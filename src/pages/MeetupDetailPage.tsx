@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Avatar } from '../components/Avatar';
 import { BalanceList } from '../components/BalanceList';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PencilIcon, PlusIcon, TrashIcon } from '../components/icons';
@@ -28,7 +29,8 @@ export function MeetupDetailPage() {
 
   if (!meetup) return <NotFoundPage title={t.notFound} />;
 
-  const nameOf = (id: string) => members.find((m) => m.id === id)?.name ?? '?';
+  const memberOf = (id: string) => members.find((m) => m.id === id);
+  const nameOf = (id: string) => memberOf(id)?.name ?? '?';
   const isDeleted = !!meetup.deletedAt;
 
   const deleteMeetup = async () => {
@@ -120,7 +122,8 @@ export function MeetupDetailPage() {
                 <SectionTitle>{t.expensesTitle}</SectionTitle>
                 <ul className="divide-y divide-line">
                   {expenses.map((expense) => (
-                    <li key={expense.id} className="flex items-start gap-2 py-3">
+                    <li key={expense.id} className="flex items-start gap-3 py-3">
+                      <Avatar member={memberOf(expense.paidByMemberId)} className="mt-0.5" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-3">
                           <p className="truncate font-medium">{expense.title}</p>
