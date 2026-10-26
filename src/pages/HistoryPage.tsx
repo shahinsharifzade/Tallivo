@@ -1,0 +1,174 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { ArrowRightIcon } from '../components/icons';
+import { buttonClass } from '../components/styles';
+import { Badge, EmptyState, ErrorText, PageHeader } from '../components/ui';
+import { formatMoney, type Settlement } from '../domain';
+import { az } from '../i18n/az';
+import { formatDate } from '../lib/format';
+import { useActions, useAppData, useHistory, type HistoryItem } from '../state/hooks';
+import { useSubmit } from '../state/useSubmit';
+
+const t = az.history;
+
+export function HistoryPage() {
+  const items = useHistory();
+  const { members } = useAppData();
+  const actions = useActions();
+  const { error, run } = useSubmit();
+  const [settlementToDelete, setSettlementToDelete] = useState<Settlement | null>(null);
+  const nameOf = (id: string) => members.find((m) => m.id === id)?.name ?? '?';
+
+  const restore = (entry: HistoryItem) =>
+    run(() => {
+      if (entry.kind === 'expense') return actions.restoreExpense(entry.item.id);
+      if (entry.kind === 'settlement') return actions.restoreSettlement(entry.item.id);
+      return actions.restoreMeetup(entry.item.id);
+    });
+
+  const deleteSettlement = async () => {
+    const s = settlementToDelete;
+    setSettlementToDelete(null);
+    if (s) await run(() => actions.deleteSettlement(s.id));
+  };
+
+  const renderBody = (entry: HistoryItem) => {
+    switch (entry.kind) {
+      case 'expense': {
+        const e = entry.item;
+        return (
+          <>
+            <p className="truncate font-medium">{e.title}</p>
+            <p className="text-sm text-slate-500">
+              {t.paidBy(nameOf(e.paidByMemberId))}
+              {entry.meetup && (
+                <>
+                  {' · '}
+                  {entry.meetup.deletedAt ? (
+                    t.inMeetup(entry.meetup.title)
+                  ) : (
+                    <Link to={`/meetups/${entry.meetup.id}`} className="underline">
+                      {t.inMeetup(entry.meetup.title)}
+                    </Link>
+                  )}
+                </>
+              )}
+            </p>
+          </>
+        );
+      }
+      case 'settlement': {
+        const s = entry.item;
+        return (
+          <>
+            <p className="flex items-center gap-1.5 font-medium">
+              {nameOf(s.fromMemberId)}
+              <span className="text-slate-400">
+                <ArrowRightIcon />
+              </span>
+              {nameOf(s.toMemberId)}
+            </p>
+            <p className="text-sm text-slate-500">
+              {formatDate(s.date)}
+              {s.note && ` · ${s.note}`}
+            </p>
+          </>
+        );
+      }
+      case 'meetup':
+        return (
+          <>
+            <p className="truncate font-medium">{entry.item.title}</p>
+            <p className="text-sm text-slate-500">{formatDate(entry.item.date)}</p>
+          </>
+        );
+    }
+  };
+
+  const kindLabel = { expense: t.expense, settlement: t.settlement, meetup: t.meetup };
+
+  return (
+    <>
+      <PageHeader title={t.title} subtitle={t.subtitle} />
+      {error && (
+        <div className="mb-3">
+          <ErrorText>{error}</ErrorText>
+        </div>
+      )}
+      {items.length === 0 ? (
+        <EmptyState title={t.emptyTitle} body={t.emptyBody} />
+      ) : (
+        <ul className="space-y-2">
+          {items.map((entry) => {
+            const deleted = !!entry.item.deletedAt;
+            const amount =
+              entry.kind === 'expense'
+                ? entry.item.totalMinor
+                : entry.kind === 'settlement'
+                  ? entry.item.amountMinor
+                  : null;
+            return (
+              <li
+                key={`${entry.kind}-${entry.item.id}`}
+                className={`rounded-2xl p-4 ring-1 ${
+                  deleted
+                    ? 'bg-slate-100 text-slate-500 ring-slate-200'
+                    : 'bg-white shadow-sm ring-slate-200'
+                }`}
+              >
+                <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                  {kindLabel[entry.kind]}
+                  {deleted && <Badge>{az.common.deleted}</Badge>}
+                </div>
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`min-w-0 flex-1 ${deleted ? 'line-through decoration-slate-400' : ''}`}
+                  >
+                    {renderBody(entry)}
+                  </div>
+                  {amount !== null && (
+                    <span className="tabular shrink-0 font-semibold">{formatMoney(amount)}</span>
+                  )}
+                </div>
+                {deleted ? (
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      className={buttonClass('secondary', 'min-h-10 text-sm')}
+                      onClick={() => restore(entry)}
+                    >
+                      {az.common.restore}
+                    </button>
+                  </div>
+                ) : (
+                  entry.kind === 'settlement' && (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        className={buttonClass('danger', 'min-h-10 px-3 text-sm')}
+                        onClick={() => setSettlementToDelete(entry.item)}
+                      >
+                        {az.common.delete}
+                      </button>
+                    </div>
+                  )
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <ConfirmDialog
+        open={settlementToDelete !== null}
+        title={t.deleteSettlementTitle}
+        confirmLabel={az.common.delete}
+        destructive
+        onConfirm={deleteSettlement}
+        onCancel={() => setSettlementToDelete(null)}
+      >
+        {t.deleteSettlementBody}
+      </ConfirmDialog>
+    </>
+  );
+}

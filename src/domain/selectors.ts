@@ -42,3 +42,10 @@ export function participantIds(expenses: readonly Expense[]): Set<Id> {
   for (const e of active(expenses)) for (const s of e.shares) ids.add(s.memberId);
   return ids;
 }
+
+/** Distinct members who paid for or took part in the given non-deleted expenses. */
+export function involvedMemberIds(expenses: readonly Expense[]): Set<Id> {
+  const ids = participantIds(expenses);
+  for (const e of active(expenses)) ids.add(e.paidByMemberId);
+  return ids;
+}

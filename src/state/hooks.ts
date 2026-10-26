@@ -3,11 +3,16 @@ import { useContext, useMemo } from 'react';
 import {
   computeBalances,
   computeBalancesForMeetup,
+  involvedMemberIds,
+  isMemberReferenced,
   participantIds,
   simplifyDebts,
   sortMembers,
   totalSpent,
+  type Expense,
   type Id,
+  type Meetup,
+  type Settlement,
 } from '../domain';
 import type { AppActions } from './actions';
 import { AppDataContext, type AppDataContextValue } from './context';
@@ -53,6 +58,84 @@ export function useMeetupSummary(meetupId: Id) {
       transfers: simplifyDebts(balances, members),
       totalSpentMinor: totalSpent(meetupExpenses),
       participantCount: participantIds(meetupExpenses).size,
+      involvedMemberIds: involvedMemberIds(meetupExpenses),
     };
   }, [meetupId, members, expenses]);
+}
+
+const byDateDesc = (a: Meetup, b: Meetup) =>
+  b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt);
+
+/** Active meetups (newest first) with their totals. */
+export function useMeetupList() {
+  const { meetups, expenses } = useAppData();
+  return useMemo(
+    () =>
+      meetups
+        .filter((m) => !m.deletedAt)
+        .sort(byDateDesc)
+        .map((meetup) => {
+          const own = expenses.filter((e) => e.meetupId === meetup.id && !e.deletedAt);
+          return {
+            meetup,
+            totalSpentMinor: totalSpent(own),
+            participantCount: participantIds(own).size,
+            expenseCount: own.length,
+          };
+        }),
+    [meetups, expenses],
+  );
+}
+
+/** One meetup (possibly soft-deleted) and its active expenses in the order they were added. */
+export function useMeetup(meetupId: Id | undefined) {
+  const { meetups, expenses } = useAppData();
+  return useMemo(() => {
+    const meetup = meetups.find((m) => m.id === meetupId);
+    const own = expenses
+      .filter((e) => e.meetupId === meetupId && !e.deletedAt)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    return { meetup, expenses: own };
+  }, [meetupId, meetups, expenses]);
+}
+
+/** Ids of members that cannot be deleted because an expense or settlement references them. */
+export function useReferencedMemberIds() {
+  const { members, expenses, settlements } = useAppData();
+  return useMemo(
+    () =>
+      new Set(
+        members.filter((m) => isMemberReferenced(m.id, expenses, settlements)).map((m) => m.id),
+      ),
+    [members, expenses, settlements],
+  );
+}
+
+export type HistoryItem =
+  | { kind: 'expense'; at: string; item: Expense; meetup: Meetup | undefined }
+  | { kind: 'settlement'; at: string; item: Settlement }
+  | { kind: 'meetup'; at: string; item: Meetup };
+
+/**
+ * Everything ever recorded, newest first, including soft-deleted rows. Deleted meetups are
+ * listed too so they can be restored.
+ */
+export function useHistory(): HistoryItem[] {
+  const { meetups, expenses, settlements } = useAppData();
+  return useMemo(() => {
+    const meetupById = new Map(meetups.map((m) => [m.id, m]));
+    const items: HistoryItem[] = [
+      ...expenses.map((e) => ({
+        kind: 'expense' as const,
+        at: e.createdAt,
+        item: e,
+        meetup: meetupById.get(e.meetupId),
+      })),
+      ...settlements.map((s) => ({ kind: 'settlement' as const, at: s.createdAt, item: s })),
+      ...meetups
+        .filter((m) => m.deletedAt)
+        .map((m) => ({ kind: 'meetup' as const, at: m.createdAt, item: m })),
+    ];
+    return items.sort((a, b) => b.at.localeCompare(a.at));
+  }, [meetups, expenses, settlements]);
 }
