@@ -6,6 +6,7 @@ import { TransferCards } from '../components/TransferCards';
 import { Card, EmptyState, SectionTitle } from '../components/ui';
 import { formatMoney, formatMoneyPlain } from '../domain';
 import { az } from '../i18n/az';
+import { useCountUp } from '../lib/motion';
 import { useAppData, useOverallSummary } from '../state/hooks';
 
 export function OverviewPage() {
@@ -38,7 +39,9 @@ export function OverviewPage() {
       <Card className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm text-ink-muted">{az.overview.totalSpent}</p>
-          <p className="tabular text-2xl font-bold">{formatMoney(totalSpentMinor)}</p>
+          <p className="tabular text-2xl font-bold">
+            <CountUpMoney value={totalSpentMinor} />
+          </p>
         </div>
         <Link to="/payments/new" className={buttonClass('primary', 'shrink-0')}>
           {az.overview.recordPayment}
@@ -65,4 +68,8 @@ export function OverviewPage() {
       </Card>
     </div>
   );
+}
+
+function CountUpMoney({ value }: { value: number }) {
+  return <>{formatMoney(useCountUp(value))}</>;
 }

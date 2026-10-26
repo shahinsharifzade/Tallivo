@@ -1,5 +1,6 @@
 import { formatMoney, type Balances, type Id, type Member } from '../domain';
 import { az } from '../i18n/az';
+import { useCountUp } from '../lib/motion';
 import { Avatar } from './Avatar';
 
 interface BalanceBarsProps {
@@ -51,8 +52,10 @@ export function BalanceBars({ members, balances, onlyIds }: BalanceBarsProps) {
   );
 }
 
+/** Wording and color follow the real value; only the displayed amount counts up. */
 function BalanceLabel({ value }: { value: number }) {
-  const amount = formatMoney(Math.abs(value));
+  const shown = useCountUp(value);
+  const amount = formatMoney(Math.abs(shown));
   const tone = value > 0 ? 'text-pos' : value < 0 ? 'text-neg' : 'text-ink-muted';
   return (
     <span className={`tabular shrink-0 text-right font-semibold transition-colors ${tone}`}>
