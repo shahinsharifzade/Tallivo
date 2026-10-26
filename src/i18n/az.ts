@@ -58,7 +58,9 @@ export const az = {
     transfersTitle: 'Kim kimə ödəməlidir',
     allSettled: 'Hamının hesabı bərabərdir.',
     recordPayment: 'Ödəniş qeyd et',
-    recordThis: 'Qeyd et',
+    recordTransferLabel: (from: string, to: string, amount: string) =>
+      `${from} → ${to} ${amount}: ödənişi qeyd et`,
+    transfersHint: 'Karta toxunun: ödəniş forması hazır doldurulmuş açılacaq.',
     emptyTitle: 'Hələ heç bir xərc yoxdur',
     emptyBody: 'Görüş yaradın və ilk xərci əlavə edin: balanslar burada görünəcək.',
     emptyAction: 'Görüş yarat',

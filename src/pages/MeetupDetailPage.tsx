@@ -5,7 +5,7 @@ import { BalanceBars } from '../components/BalanceBars';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PencilIcon, PlusIcon, TrashIcon } from '../components/icons';
 import { buttonClass } from '../components/styles';
-import { TransferList } from '../components/TransferList';
+import { TransferCards } from '../components/TransferCards';
 import { Card, EmptyState, ErrorText, PageHeader, SectionTitle } from '../components/ui';
 import { formatMoney, type Expense } from '../domain';
 import { az } from '../i18n/az';
@@ -178,7 +178,7 @@ export function MeetupDetailPage() {
 
               <Card>
                 <SectionTitle>{t.transfersTitle}</SectionTitle>
-                <TransferList
+                <TransferCards
                   transfers={summary.transfers}
                   members={members}
                   emptyText={t.allSettled}

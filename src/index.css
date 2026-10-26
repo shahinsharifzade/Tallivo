@@ -90,9 +90,24 @@
   .chip-pop {
     animation: chip-pop 180ms ease-out;
   }
+  /* A ~300 ms nudge to the right, then rest; repeats every 2 s. */
+  .arrow-nudge {
+    animation: arrow-nudge 2s ease-in-out infinite;
+  }
   /* Grows from scaleX(0) to the element's own transform (set inline). */
   .bar-grow {
     animation: bar-grow 300ms ease-out both;
+  }
+}
+
+@keyframes arrow-nudge {
+  0%,
+  15%,
+  100% {
+    transform: translateX(0);
+  }
+  7% {
+    transform: translateX(3px);
   }
 }
 

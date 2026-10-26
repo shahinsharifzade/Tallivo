@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { BalanceBars } from '../components/BalanceBars';
 import { PlusIcon } from '../components/icons';
 import { buttonClass } from '../components/styles';
-import { TransferList } from '../components/TransferList';
+import { TransferCards } from '../components/TransferCards';
 import { Card, EmptyState, SectionTitle } from '../components/ui';
 import { formatMoney, formatMoneyPlain } from '../domain';
 import { az } from '../i18n/az';
@@ -51,19 +51,16 @@ export function OverviewPage() {
       </Card>
 
       <Card>
-        <SectionTitle>{az.overview.transfersTitle}</SectionTitle>
-        <TransferList
+        <SectionTitle hint={transfers.length > 0 ? az.overview.transfersHint : undefined}>
+          {az.overview.transfersTitle}
+        </SectionTitle>
+        <TransferCards
           transfers={transfers}
           members={members}
           emptyText={az.overview.allSettled}
-          renderAction={(t) => (
-            <Link
-              to={`/payments/new?from=${t.fromMemberId}&to=${t.toMemberId}&amount=${formatMoneyPlain(t.amountMinor)}`}
-              className={buttonClass('secondary', 'min-h-10 px-3 text-sm')}
-            >
-              {az.overview.recordThis}
-            </Link>
-          )}
+          linkFor={(t) =>
+            `/payments/new?from=${t.fromMemberId}&to=${t.toMemberId}&amount=${formatMoneyPlain(t.amountMinor)}`
+          }
         />
       </Card>
     </div>
