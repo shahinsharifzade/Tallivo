@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { MEMBER_PALETTE } from '../lib/memberColors';
 import { prefersReducedMotion } from '../lib/motion';
 
@@ -83,12 +84,14 @@ export function Confetti({ onDone }: { onDone: () => void }) {
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  return (
+  // Portal to <body> so animated (transformed) ancestors cannot offset the fixed canvas.
+  return createPortal(
     <canvas
       ref={canvasRef}
       aria-hidden="true"
       data-confetti
       className="pointer-events-none fixed inset-0 z-50 h-full w-full"
-    />
+    />,
+    document.body,
   );
 }
