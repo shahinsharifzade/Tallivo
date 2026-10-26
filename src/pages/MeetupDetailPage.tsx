@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Avatar } from '../components/Avatar';
 import { BalanceBars } from '../components/BalanceBars';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { ReceiptArt } from '../components/illustrations';
 import { PencilIcon, PlusIcon, TrashIcon } from '../components/icons';
 import { buttonClass } from '../components/styles';
 import { SwipeToDelete } from '../components/SwipeToDelete';
@@ -126,7 +127,7 @@ export function MeetupDetailPage() {
           </Card>
 
           {expenses.length === 0 ? (
-            <EmptyState title={t.noExpensesTitle} body={t.noExpensesBody} />
+            <EmptyState art={<ReceiptArt />} title={t.noExpensesTitle} body={t.noExpensesBody} />
           ) : (
             <>
               <Card>

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { AvatarStack } from '../components/Avatar';
+import { MeetupsArt } from '../components/illustrations';
 import { ChevronRightIcon, PlusIcon } from '../components/icons';
 import { buttonClass } from '../components/styles';
 import { SwipeToDelete } from '../components/SwipeToDelete';
@@ -42,7 +43,12 @@ export function MeetupsPage() {
         <p className="-mt-2 mb-3 text-sm text-ink-muted">{az.feedback.swipeHint}</p>
       )}
       {items.length === 0 ? (
-        <EmptyState title={az.meetups.emptyTitle} body={az.meetups.emptyBody} action={newButton} />
+        <EmptyState
+          art={<MeetupsArt />}
+          title={az.meetups.emptyTitle}
+          body={az.meetups.emptyBody}
+          action={newButton}
+        />
       ) : (
         <ul className="stagger space-y-2">
           {items.map(({ meetup, totalSpentMinor, participants, expenseCount }) => (

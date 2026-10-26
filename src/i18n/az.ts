@@ -57,6 +57,8 @@ export const az = {
     balancesHint: 'Bütün görüşlər və ödənişlər birlikdə.',
     transfersTitle: 'Kim kimə ödəməlidir',
     allSettled: 'Hamının hesabı bərabərdir.',
+    paidTitle: 'Kim nə qədər ödəyib',
+    paidHint: 'Bütün görüşlərdə ödənilən hesabların cəmi (borc qaytarmaları daxil deyil).',
     settledTitle: 'Hesab bərabər!',
     settledBody: 'Heç kim heç kimə borclu deyil. Növbəti görüşə qədər!',
     recordPayment: 'Ödəniş qeyd et',

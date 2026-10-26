@@ -56,13 +56,17 @@ export function EmptyState({
   title,
   body,
   action,
+  art,
 }: {
   title: string;
   body?: string;
   action?: ReactNode;
+  /** Optional small illustration shown above the title. */
+  art?: ReactNode;
 }) {
   return (
     <div className="rounded-card border border-dashed border-line-strong bg-surface/60 px-6 py-10 text-center">
+      {art && <div className="mb-3 flex justify-center">{art}</div>}
       <p className="font-semibold text-ink">{title}</p>
       {body && <p className="mx-auto mt-1 max-w-xs text-sm text-ink-muted">{body}</p>}
       {action && <div className="mt-4">{action}</div>}

@@ -8,6 +8,7 @@ import {
   participantIds,
   simplifyDebts,
   sortMembers,
+  totalPaidByMember,
   totalSpent,
   type Expense,
   type Id,
@@ -48,6 +49,12 @@ export function useOverallSummary() {
       settled: expenses.some((e) => !e.deletedAt) && Object.values(balances).every((v) => v === 0),
     };
   }, [members, expenses, settlements]);
+}
+
+/** memberId -> total paid for (non-deleted) expenses. */
+export function usePaidByMember() {
+  const { members, expenses } = useAppData();
+  return useMemo(() => totalPaidByMember(members, expenses), [members, expenses]);
 }
 
 /** Balances, simplified debts and totals for one meetup (settlements are not included). */

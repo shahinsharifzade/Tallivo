@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BalanceBars } from '../components/BalanceBars';
 import { Confetti } from '../components/Confetti';
+import { ReceiptArt } from '../components/illustrations';
 import { PlusIcon } from '../components/icons';
+import { PaidChart } from '../components/PaidChart';
 import { buttonClass } from '../components/styles';
 import { TransferCards } from '../components/TransferCards';
 import { Card, EmptyState, SectionTitle } from '../components/ui';
@@ -10,13 +12,14 @@ import { formatMoney, formatMoneyPlain } from '../domain';
 import { az } from '../i18n/az';
 import { useCountUp } from '../lib/motion';
 import { useCelebration } from '../state/celebration';
-import { useAppData, useOverallSummary } from '../state/hooks';
+import { useAppData, useOverallSummary, usePaidByMember } from '../state/hooks';
 
 export function OverviewPage() {
   const { members, expenses, settlements } = useAppData();
   const { balances, transfers, totalSpentMinor, settled } = useOverallSummary();
   const hasData = expenses.some((e) => !e.deletedAt) || settlements.some((s) => !s.deletedAt);
   const celebration = useCelebration();
+  const paid = usePaidByMember();
   const [confetti, setConfetti] = useState(false);
 
   // Confetti only right after the group became settled, never on a plain page load.
@@ -31,6 +34,7 @@ export function OverviewPage() {
       <>
         <h1 className="sr-only">{az.overview.title}</h1>
         <EmptyState
+          art={<ReceiptArt />}
           title={az.overview.emptyTitle}
           body={az.overview.emptyBody}
           action={
@@ -92,6 +96,11 @@ export function OverviewPage() {
           />
         </Card>
       )}
+
+      <Card>
+        <SectionTitle hint={az.overview.paidHint}>{az.overview.paidTitle}</SectionTitle>
+        <PaidChart members={members} paid={paid} />
+      </Card>
     </div>
   );
 }

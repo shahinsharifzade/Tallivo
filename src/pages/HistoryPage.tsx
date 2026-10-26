@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar } from '../components/Avatar';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { HistoryArt } from '../components/illustrations';
 import { ArrowRightIcon } from '../components/icons';
 import { buttonClass } from '../components/styles';
 import { SwipeToDelete } from '../components/SwipeToDelete';
@@ -112,7 +113,7 @@ export function HistoryPage() {
         </div>
       )}
       {items.length === 0 ? (
-        <EmptyState title={t.emptyTitle} body={t.emptyBody} />
+        <EmptyState art={<HistoryArt />} title={t.emptyTitle} body={t.emptyBody} />
       ) : (
         <ul className="stagger space-y-2">
           {items.map((entry) => {

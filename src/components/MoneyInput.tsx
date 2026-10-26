@@ -38,7 +38,7 @@ type HeroMoneyInputProps = Omit<
 /** Large, centered amount entry for the expense form. The whole block focuses the input. */
 export function HeroMoneyInput({ id, label, value, invalid, ...props }: HeroMoneyInputProps) {
   // Grow with the content so "₼" stays right next to the number (layout, not animation).
-  const width = `${Math.max(value.length, 4) + 0.5}ch`;
+  const width = `${Math.max(value.length, 4) + 0.2}ch`;
   return (
     <label
       htmlFor={id}
@@ -57,7 +57,7 @@ export function HeroMoneyInput({ id, label, value, invalid, ...props }: HeroMone
           aria-invalid={invalid || undefined}
           value={value}
           style={{ width }}
-          className="tabular min-w-0 max-w-full bg-transparent text-center text-5xl font-bold tracking-tight text-ink placeholder:text-ink-muted/50 focus:outline-none"
+          className="tabular min-w-0 max-w-full bg-transparent text-right text-5xl font-bold tracking-tight text-ink placeholder:text-ink-muted/50 focus:outline-none"
           {...props}
         />
         <span aria-hidden="true" className="text-3xl font-semibold text-ink-muted">
