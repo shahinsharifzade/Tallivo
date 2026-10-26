@@ -71,7 +71,7 @@ const byDateDesc = (a: Meetup, b: Meetup) =>
 
 /** Active meetups (newest first) with their totals. */
 export function useMeetupList() {
-  const { meetups, expenses } = useAppData();
+  const { meetups, expenses, members } = useAppData();
   return useMemo(
     () =>
       meetups
@@ -79,14 +79,15 @@ export function useMeetupList() {
         .sort(byDateDesc)
         .map((meetup) => {
           const own = expenses.filter((e) => e.meetupId === meetup.id && !e.deletedAt);
+          const ids = participantIds(own);
           return {
             meetup,
             totalSpentMinor: totalSpent(own),
-            participantCount: participantIds(own).size,
+            participants: members.filter((m) => ids.has(m.id)),
             expenseCount: own.length,
           };
         }),
-    [meetups, expenses],
+    [meetups, expenses, members],
   );
 }
 
