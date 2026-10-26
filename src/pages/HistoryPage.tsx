@@ -40,7 +40,7 @@ export function HistoryPage() {
         return (
           <>
             <p className="truncate font-medium">{e.title}</p>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-ink-muted">
               {t.paidBy(nameOf(e.paidByMemberId))}
               {entry.meetup && (
                 <>
@@ -64,12 +64,12 @@ export function HistoryPage() {
           <>
             <p className="flex items-center gap-1.5 font-medium">
               {nameOf(s.fromMemberId)}
-              <span className="text-slate-400">
+              <span className="text-ink-muted">
                 <ArrowRightIcon />
               </span>
               {nameOf(s.toMemberId)}
             </p>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-ink-muted">
               {formatDate(s.date)}
               {s.note && ` · ${s.note}`}
             </p>
@@ -80,7 +80,7 @@ export function HistoryPage() {
         return (
           <>
             <p className="truncate font-medium">{entry.item.title}</p>
-            <p className="text-sm text-slate-500">{formatDate(entry.item.date)}</p>
+            <p className="text-sm text-ink-muted">{formatDate(entry.item.date)}</p>
           </>
         );
     }
@@ -111,19 +111,19 @@ export function HistoryPage() {
             return (
               <li
                 key={`${entry.kind}-${entry.item.id}`}
-                className={`rounded-2xl p-4 ring-1 ${
+                className={`rounded-card p-4 ring-1 ${
                   deleted
-                    ? 'bg-slate-100 text-slate-500 ring-slate-200'
-                    : 'bg-white shadow-sm ring-slate-200'
+                    ? 'bg-surface-2 text-ink-muted ring-line'
+                    : 'bg-surface shadow-card ring-line'
                 }`}
               >
-                <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-ink-muted">
                   {kindLabel[entry.kind]}
                   {deleted && <Badge>{az.common.deleted}</Badge>}
                 </div>
                 <div className="flex items-start gap-3">
                   <div
-                    className={`min-w-0 flex-1 ${deleted ? 'line-through decoration-slate-400' : ''}`}
+                    className={`min-w-0 flex-1 ${deleted ? 'line-through decoration-ink-muted' : ''}`}
                   >
                     {renderBody(entry)}
                   </div>

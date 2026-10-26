@@ -49,7 +49,7 @@ export function MeetupDetailPage() {
         subtitle={
           <>
             {formatDate(meetup.date)}
-            {meetup.note && <span className="block text-slate-600">{meetup.note}</span>}
+            {meetup.note && <span className="block text-ink-soft">{meetup.note}</span>}
           </>
         }
         backTo="/meetups"
@@ -82,7 +82,7 @@ export function MeetupDetailPage() {
 
       {isDeleted ? (
         <Card className="space-y-3">
-          <p className="text-slate-600">{t.deletedBanner}</p>
+          <p className="text-ink-soft">{t.deletedBanner}</p>
           <button
             type="button"
             className={buttonClass('secondary')}
@@ -95,10 +95,10 @@ export function MeetupDetailPage() {
         <>
           <Card className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-slate-500">{t.totalSpent}</p>
+              <p className="text-sm text-ink-muted">{t.totalSpent}</p>
               <p className="tabular text-2xl font-bold">{formatMoney(summary.totalSpentMinor)}</p>
               {summary.participantCount > 0 && (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-ink-muted">
                   {az.common.people(summary.participantCount)}
                 </p>
               )}
@@ -118,7 +118,7 @@ export function MeetupDetailPage() {
             <>
               <Card>
                 <SectionTitle>{t.expensesTitle}</SectionTitle>
-                <ul className="divide-y divide-slate-100">
+                <ul className="divide-y divide-line">
                   {expenses.map((expense) => (
                     <li key={expense.id} className="flex items-start gap-2 py-3">
                       <div className="min-w-0 flex-1">
@@ -128,16 +128,16 @@ export function MeetupDetailPage() {
                             {formatMoney(expense.totalMinor)}
                           </p>
                         </div>
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-ink-muted">
                           {t.paidBy(nameOf(expense.paidByMemberId))}
                         </p>
-                        <p className="tabular text-sm text-slate-500">
+                        <p className="tabular text-sm text-ink-muted">
                           {expense.shares
                             .map((s) => `${nameOf(s.memberId)} ${formatMoney(s.amountMinor)}`)
                             .join(' · ')}
                         </p>
                         {expense.note && (
-                          <p className="text-sm italic text-slate-500">{expense.note}</p>
+                          <p className="text-sm italic text-ink-muted">{expense.note}</p>
                         )}
                       </div>
                       <div className="flex shrink-0">

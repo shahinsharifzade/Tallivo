@@ -13,11 +13,11 @@ interface TransferListProps {
 /** "Who pays whom" rows produced by simplifyDebts. */
 export function TransferList({ transfers, members, emptyText, renderAction }: TransferListProps) {
   if (transfers.length === 0) {
-    return <p className="py-2 text-sm text-slate-500">{emptyText}</p>;
+    return <p className="py-2 text-sm text-ink-muted">{emptyText}</p>;
   }
   const name = (id: string) => members.find((m) => m.id === id)?.name ?? '?';
   return (
-    <ul className="divide-y divide-slate-100">
+    <ul className="divide-y divide-line">
       {transfers.map((t) => (
         <li
           key={`${t.fromMemberId}-${t.toMemberId}`}
@@ -25,7 +25,7 @@ export function TransferList({ transfers, members, emptyText, renderAction }: Tr
         >
           <span className="flex min-w-0 flex-1 items-center gap-1.5 font-medium">
             <span className="truncate">{name(t.fromMemberId)}</span>
-            <span className="shrink-0 text-slate-400">
+            <span className="shrink-0 text-ink-muted">
               <ArrowRightIcon />
             </span>
             <span className="truncate">{name(t.toMemberId)}</span>

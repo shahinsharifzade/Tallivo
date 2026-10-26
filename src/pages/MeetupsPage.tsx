@@ -27,11 +27,11 @@ export function MeetupsPage() {
             <li key={meetup.id}>
               <Link
                 to={`/meetups/${meetup.id}`}
-                className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 hover:ring-accent-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-500"
+                className="flex items-center gap-3 rounded-card bg-surface p-4 shadow-card ring-1 ring-line hover:ring-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{meetup.title}</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-ink-muted">
                     {formatDate(meetup.date)} · {az.common.people(participantCount)} ·{' '}
                     {az.meetups.expenseCount(expenseCount)}
                   </p>
@@ -39,7 +39,7 @@ export function MeetupsPage() {
                 <span className="tabular shrink-0 font-semibold">
                   {formatMoney(totalSpentMinor)}
                 </span>
-                <span className="shrink-0 text-slate-400">
+                <span className="shrink-0 text-ink-muted">
                   <ChevronRightIcon />
                 </span>
               </Link>

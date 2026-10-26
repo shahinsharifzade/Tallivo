@@ -12,11 +12,11 @@ interface BalanceListProps {
 export function BalanceList({ members, balances, onlyIds }: BalanceListProps) {
   const rows = onlyIds ? members.filter((m) => onlyIds.has(m.id)) : members;
   return (
-    <ul className="divide-y divide-slate-100">
+    <ul className="divide-y divide-line">
       {rows.map((m) => {
         const value = balances[m.id] ?? 0;
         const amount = formatMoney(Math.abs(value));
-        const tone = value > 0 ? 'text-emerald-700' : value < 0 ? 'text-red-700' : 'text-slate-500';
+        const tone = value > 0 ? 'text-pos' : value < 0 ? 'text-neg' : 'text-ink-muted';
         return (
           <li key={m.id} className="flex min-h-12 items-center justify-between gap-3 py-2">
             <span className="font-medium">{m.name}</span>

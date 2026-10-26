@@ -41,12 +41,12 @@ export function BackupPanel() {
   };
 
   const buttonClass =
-    'min-h-11 flex-1 rounded-xl border border-slate-200 bg-white px-4 font-medium hover:bg-slate-50';
+    'min-h-11 flex-1 rounded-control border border-line bg-surface px-4 font-medium hover:bg-surface-2';
 
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+    <section className="rounded-card bg-surface p-4 shadow-card ring-1 ring-line">
       <h2 className="font-semibold">{az.backup.title}</h2>
-      <p className="mt-1 text-sm text-slate-600">{az.backup.description}</p>
+      <p className="mt-1 text-sm text-ink-soft">{az.backup.description}</p>
       <div className="mt-3 flex gap-2">
         <button type="button" className={buttonClass} onClick={handleExport}>
           {az.backup.export}
@@ -69,7 +69,7 @@ export function BackupPanel() {
       {feedback && (
         <p
           role="status"
-          className={`mt-3 text-sm ${feedback.kind === 'success' ? 'text-emerald-700' : 'text-red-700'}`}
+          className={`mt-3 text-sm ${feedback.kind === 'success' ? 'text-pos' : 'text-neg'}`}
         >
           {feedback.text}
         </p>

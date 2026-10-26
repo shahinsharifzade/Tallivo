@@ -37,7 +37,7 @@ export function OverviewPage() {
 
       <Card className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm text-slate-500">{az.overview.totalSpent}</p>
+          <p className="text-sm text-ink-muted">{az.overview.totalSpent}</p>
           <p className="tabular text-2xl font-bold">{formatMoney(totalSpentMinor)}</p>
         </div>
         <Link to="/payments/new" className={buttonClass('primary', 'shrink-0')}>

@@ -21,10 +21,10 @@ export function MemberChips({ members, selected, onToggle, disabledIds }: Member
             aria-pressed={isOn}
             disabled={disabled}
             onClick={() => onToggle(m.id)}
-            className={`min-h-11 rounded-full px-4 font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-500 disabled:cursor-not-allowed disabled:opacity-40 ${
+            className={`min-h-11 rounded-full px-4 font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-40 ${
               isOn
-                ? 'bg-accent-500 text-white hover:bg-accent-600'
-                : 'bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50'
+                ? 'bg-accent text-accent-contrast hover:bg-accent-strong'
+                : 'bg-surface text-ink-soft ring-1 ring-line-strong hover:bg-surface-2'
             }`}
           >
             {m.name}

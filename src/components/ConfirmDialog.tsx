@@ -40,24 +40,26 @@ export function ConfirmDialog({
       onClick={(e) => {
         if (e.target === ref.current) onCancel();
       }}
-      className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-0 shadow-xl backdrop:bg-slate-900/40"
+      className="w-[calc(100%-2rem)] max-w-sm rounded-card bg-surface p-0 text-ink shadow-raised backdrop:bg-black/50"
     >
       <div className="p-5">
         <h2 className="text-lg font-semibold">{title}</h2>
-        {children && <div className="mt-2 text-sm text-slate-600">{children}</div>}
+        {children && <div className="mt-2 text-sm text-ink-soft">{children}</div>}
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"
             onClick={onCancel}
-            className="min-h-11 rounded-xl px-4 font-medium text-slate-700 hover:bg-slate-100"
+            className="min-h-11 rounded-control px-4 font-medium text-ink-soft hover:bg-surface-2"
           >
             {az.common.cancel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`min-h-11 rounded-xl px-4 font-semibold text-white ${
-              destructive ? 'bg-red-600 hover:bg-red-700' : 'bg-accent-500 hover:bg-accent-600'
+            className={`min-h-11 rounded-control px-4 font-semibold ${
+              destructive
+                ? 'bg-neg-solid text-white hover:bg-neg-solid/90'
+                : 'bg-accent text-accent-contrast hover:bg-accent-strong'
             }`}
           >
             {confirmLabel}

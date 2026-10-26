@@ -75,7 +75,7 @@ function MemberRow({
           </button>
         )}
       </div>
-      {error && <p className="mt-1 text-sm text-red-700">{error}</p>}
+      {error && <p className="mt-1 text-sm text-neg">{error}</p>}
     </li>
   );
 }
@@ -120,7 +120,7 @@ export function SettingsPage() {
 
       <Card>
         <SectionTitle hint={t.membersHint}>{t.membersTitle}</SectionTitle>
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-line">
           {members.map((m) => (
             <MemberRow
               // Re-mount on external renames (e.g. after import) so the input shows the new name.
@@ -153,7 +153,7 @@ export function SettingsPage() {
             {t.addMember}
           </button>
         </form>
-        {addSubmit.error && <p className="mt-1 text-sm text-red-700">{addSubmit.error}</p>}
+        {addSubmit.error && <p className="mt-1 text-sm text-neg">{addSubmit.error}</p>}
       </Card>
 
       <BackupPanel />
@@ -162,13 +162,13 @@ export function SettingsPage() {
         <SectionTitle hint={t.resetHint}>{t.resetTitle}</SectionTitle>
         <button
           type="button"
-          className={buttonClass('danger', 'ring-1 ring-red-200')}
+          className={buttonClass('danger', 'ring-1 ring-neg/30')}
           onClick={() => setConfirmReset(true)}
         >
           {t.resetButton}
         </button>
         {resetDone && (
-          <p role="status" className="mt-2 text-sm text-emerald-700">
+          <p role="status" className="mt-2 text-sm text-pos">
             {t.resetDone}
           </p>
         )}

@@ -140,7 +140,7 @@ function ExpenseForm({
               draft.participants.size < members.length && (
                 <button
                   type="button"
-                  className="min-h-11 px-2 text-sm font-medium text-accent-600 hover:underline"
+                  className="min-h-11 px-2 text-sm font-medium text-accent-ink hover:underline"
                   onClick={() => update({ participants: new Set(members.map((m) => m.id)) })}
                 >
                   {t.selectAll}
@@ -156,15 +156,15 @@ function ExpenseForm({
           </FieldGroup>
 
           <FieldGroup legend={t.splitMode}>
-            <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
+            <div className="grid grid-cols-2 gap-1 rounded-control bg-surface-2 p-1">
               {(['equal', 'custom'] as SplitMode[]).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   aria-pressed={draft.mode === mode}
                   onClick={() => update({ mode })}
-                  className={`min-h-11 rounded-lg font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-500 ${
-                    draft.mode === mode ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
+                  className={`min-h-11 rounded-lg font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                    draft.mode === mode ? 'bg-surface text-ink shadow-card' : 'text-ink-soft'
                   }`}
                 >
                   {mode === 'equal' ? t.splitEqual : t.splitCustom}
@@ -174,8 +174,8 @@ function ExpenseForm({
           </FieldGroup>
 
           {draft.mode === 'equal' && evaluation.shares && (
-            <div className="rounded-xl bg-slate-50 p-3">
-              <p className="mb-1 text-sm font-medium text-slate-600">{t.equalPreview}</p>
+            <div className="rounded-control bg-bg p-3">
+              <p className="mb-1 text-sm font-medium text-ink-soft">{t.equalPreview}</p>
               <ul className="tabular space-y-0.5 text-sm">
                 {evaluation.shares.map((s) => (
                   <li key={s.memberId} className="flex justify-between">
@@ -210,17 +210,17 @@ function ExpenseForm({
                       }
                     />
                     {rowError && (
-                      <p className="col-span-2 -mt-2 text-right text-sm text-red-700">{rowError}</p>
+                      <p className="col-span-2 -mt-2 text-right text-sm text-neg">{rowError}</p>
                     )}
                   </div>
                 );
               })}
               <p
                 aria-live="polite"
-                className={`tabular rounded-xl px-3 py-2 text-sm font-medium ${
+                className={`tabular rounded-control px-3 py-2 text-sm font-medium ${
                   totalMinor !== null && remainingMinor === 0
-                    ? 'bg-emerald-50 text-emerald-800'
-                    : 'bg-amber-50 text-amber-900'
+                    ? 'bg-pos-soft text-pos'
+                    : 'bg-neg-soft text-neg'
                 }`}
               >
                 {t.assigned(

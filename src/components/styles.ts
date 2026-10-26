@@ -3,13 +3,13 @@
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 const base =
-  'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-500 disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-4 font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50';
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-accent-500 text-white hover:bg-accent-600',
-  secondary: 'bg-white text-slate-800 ring-1 ring-slate-200 hover:bg-slate-50',
-  ghost: 'text-slate-700 hover:bg-slate-100',
-  danger: 'text-red-700 hover:bg-red-50',
+  primary: 'bg-accent text-accent-contrast hover:bg-accent-strong',
+  secondary: 'bg-surface text-ink ring-1 ring-line hover:bg-surface-2',
+  ghost: 'text-ink-soft hover:bg-surface-2',
+  danger: 'text-neg hover:bg-neg-soft',
 };
 
 export function buttonClass(variant: Variant = 'primary', extra = ''): string {
@@ -17,4 +17,4 @@ export function buttonClass(variant: Variant = 'primary', extra = ''): string {
 }
 
 export const inputClass =
-  'block min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-100 aria-[invalid=true]:border-red-500';
+  'block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-base text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25 aria-[invalid=true]:border-neg';

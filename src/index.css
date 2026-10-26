@@ -2,12 +2,80 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Design tokens. Colors are "R G B" triplets so Tailwind opacity modifiers work
+ * (e.g. bg-accent/20). Change the look of the whole app here.
+ */
 @layer base {
+  :root {
+    --c-bg: 250 248 245;
+    --c-surface: 255 255 255;
+    --c-surface-2: 244 241 236;
+    --c-surface-3: 231 227 220;
+    --c-ink: 28 25 23;
+    --c-ink-soft: 68 64 60;
+    --c-ink-muted: 115 108 102;
+    --c-line: 233 229 223;
+    --c-line-strong: 212 206 198;
+
+    --c-accent: 15 118 110; /* teal */
+    --c-accent-strong: 17 94 89;
+    --c-accent-soft: 214 245 238;
+    --c-accent-ink: 17 94 89;
+    --c-accent-contrast: 255 255 255;
+
+    --c-pos: 4 120 87; /* green: is owed */
+    --c-pos-soft: 220 247 234;
+    --c-pos-bar: 16 185 129;
+    --c-neg: 186 64 43; /* coral: owes */
+    --c-neg-soft: 254 230 224;
+    --c-neg-bar: 244 112 89;
+    --c-neg-solid: 196 62 40;
+
+    --radius-card: 18px;
+    --radius-control: 12px;
+    --shadow-card: 0 1px 2px rgb(28 25 23 / 0.04), 0 6px 20px -6px rgb(28 25 23 / 0.08);
+    --shadow-raised: 0 10px 30px -8px rgb(28 25 23 / 0.25);
+
+    color-scheme: light;
+  }
+
+  .dark {
+    --c-bg: 17 19 21;
+    --c-surface: 27 30 33;
+    --c-surface-2: 37 41 45;
+    --c-surface-3: 52 57 62;
+    --c-ink: 241 238 233;
+    --c-ink-soft: 208 203 196;
+    --c-ink-muted: 160 154 146;
+    --c-line: 46 51 56;
+    --c-line-strong: 72 78 84;
+
+    --c-accent: 45 212 191;
+    --c-accent-strong: 94 234 212;
+    --c-accent-soft: 19 66 63;
+    --c-accent-ink: 153 246 228;
+    --c-accent-contrast: 4 47 46;
+
+    --c-pos: 74 222 160;
+    --c-pos-soft: 10 60 45;
+    --c-pos-bar: 16 185 129;
+    --c-neg: 252 151 132;
+    --c-neg-soft: 80 34 27;
+    --c-neg-bar: 244 112 89;
+    --c-neg-solid: 196 62 40;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-raised: 0 12px 32px -8px rgb(0 0 0 / 0.6);
+
+    color-scheme: dark;
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-slate-50 font-sans text-slate-900 antialiased;
+    @apply bg-bg font-sans text-ink antialiased;
   }
 }
 

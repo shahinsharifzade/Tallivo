@@ -19,7 +19,7 @@ export function MoneyInput({ invalid, className = '', ...props }: MoneyInputProp
         className={`${inputClass} tabular pr-9 ${className}`}
         {...props}
       />
-      <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+      <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-ink-muted">
         ₼
       </span>
     </div>
