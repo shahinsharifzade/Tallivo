@@ -27,12 +27,14 @@ export function TransferCards({ transfers, members, emptyText, linkFor }: Transf
         const amount = formatMoney(t.amountMinor);
         const body = (
           <>
-            <Person member={from} />
-            <span className="arrow-nudge shrink-0 text-ink-muted">
-              <ArrowRightIcon />
+            <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+              <Person member={from} />
+              <span className="arrow-nudge shrink-0 text-ink-muted">
+                <ArrowRightIcon />
+              </span>
+              <Person member={to} />
             </span>
-            <Person member={to} />
-            <span className="tabular ml-auto shrink-0 pl-2 font-semibold">{amount}</span>
+            <span className="tabular shrink-0 pl-1 font-semibold">{amount}</span>
           </>
         );
         const base = 'flex min-h-14 items-center gap-2 rounded-control bg-surface-2 px-3 py-2';
@@ -65,9 +67,9 @@ export function TransferCards({ transfers, members, emptyText, linkFor }: Transf
 
 function Person({ member }: { member: Member | undefined }) {
   return (
-    <span className="flex min-w-0 items-center gap-1.5">
+    <span className="flex min-w-0 max-w-full items-center gap-1.5">
       <Avatar member={member} size="sm" />
-      <span className="truncate font-medium">{member?.name ?? '?'}</span>
+      <span className="break-words font-medium">{member?.name ?? '?'}</span>
     </span>
   );
 }

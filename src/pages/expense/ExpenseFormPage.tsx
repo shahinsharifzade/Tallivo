@@ -1,7 +1,9 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MemberChips } from '../../components/MemberChips';
-import { MoneyInput } from '../../components/MoneyInput';
+import { Avatar } from '../../components/Avatar';
+import { HeroMoneyInput, MoneyInput } from '../../components/MoneyInput';
+import { SplitBar } from '../../components/SplitBar';
 import { buttonClass, inputClass } from '../../components/styles';
 import { Card, ErrorText, Field, FieldGroup, PageHeader } from '../../components/ui';
 import { formatMoney, type Expense, type Id, type Member } from '../../domain';
@@ -101,29 +103,34 @@ function ExpenseForm({
       />
       <Card>
         <form onSubmit={onSubmit} className="space-y-5" noValidate>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="expense-title" label={t.title} error={submitted ? errors.title : null}>
-              <input
-                id="expense-title"
-                className={inputClass}
-                value={draft.title}
-                onChange={(e) => update({ title: e.target.value })}
-                placeholder={t.titlePlaceholder}
-                aria-invalid={submitted && !!errors.title}
-                autoFocus={!expense}
-                maxLength={80}
-              />
-            </Field>
-            <Field id="expense-total" label={t.total} error={showTotalError ? errors.total : null}>
-              <MoneyInput
-                id="expense-total"
-                value={draft.total}
-                onChange={(e) => update({ total: e.target.value })}
-                invalid={!!showTotalError}
-                className="text-lg font-semibold"
-              />
-            </Field>
+          <div>
+            <HeroMoneyInput
+              id="expense-total"
+              label={t.total}
+              value={draft.total}
+              onChange={(e) => update({ total: e.target.value })}
+              invalid={!!showTotalError}
+              aria-describedby={showTotalError ? 'expense-total-error' : undefined}
+              autoFocus={!expense}
+            />
+            {showTotalError && (
+              <p id="expense-total-error" className="mt-1 text-center text-sm text-neg">
+                {errors.total}
+              </p>
+            )}
           </div>
+
+          <Field id="expense-title" label={t.title} error={submitted ? errors.title : null}>
+            <input
+              id="expense-title"
+              className={inputClass}
+              value={draft.title}
+              onChange={(e) => update({ title: e.target.value })}
+              placeholder={t.titlePlaceholder}
+              aria-invalid={submitted && !!errors.title}
+              maxLength={80}
+            />
+          </Field>
 
           <FieldGroup legend={t.paidBy} error={submitted ? errors.paidBy : null}>
             <MemberChips
@@ -174,21 +181,37 @@ function ExpenseForm({
           </FieldGroup>
 
           {draft.mode === 'equal' && evaluation.shares && (
-            <div className="rounded-control bg-bg p-3">
-              <p className="mb-1 text-sm font-medium text-ink-soft">{t.equalPreview}</p>
-              <ul className="tabular space-y-0.5 text-sm">
-                {evaluation.shares.map((s) => (
-                  <li key={s.memberId} className="flex justify-between">
-                    <span>{members.find((m) => m.id === s.memberId)?.name}</span>
-                    <span>{formatMoney(s.amountMinor)}</span>
-                  </li>
-                ))}
+            <div className="space-y-3 rounded-control bg-bg p-3">
+              <SplitBar
+                shares={evaluation.shares}
+                totalMinor={totalMinor}
+                members={members}
+                label={t.splitBarLabel}
+              />
+              <p className="text-sm font-medium text-ink-soft">{t.equalPreview}</p>
+              <ul className="tabular grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+                {evaluation.shares.map((s) => {
+                  const m = members.find((x) => x.id === s.memberId);
+                  return (
+                    <li key={s.memberId} className="flex min-w-0 items-center gap-2">
+                      <Avatar member={m} size="xs" />
+                      <span className="min-w-0 flex-1 truncate">{m?.name}</span>
+                      <span className="font-semibold">{formatMoney(s.amountMinor)}</span>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
 
           {draft.mode === 'custom' && evaluation.orderedParticipants.length > 0 && (
             <div className="space-y-3">
+              <SplitBar
+                shares={evaluation.validCustomShares}
+                totalMinor={totalMinor}
+                members={members}
+                label={t.splitBarLabel}
+              />
               {evaluation.orderedParticipants.map((m) => {
                 const raw = draft.custom[m.id] ?? '';
                 const rowError = (submitted || raw.trim() !== '') && customErrors[m.id];
@@ -197,8 +220,12 @@ function ExpenseForm({
                     key={m.id}
                     className="grid grid-cols-[minmax(0,1fr)_9rem] items-center gap-3"
                   >
-                    <label htmlFor={`share-${m.id}`} className="truncate font-medium">
-                      {m.name}
+                    <label
+                      htmlFor={`share-${m.id}`}
+                      className="flex min-w-0 items-center gap-2 font-medium"
+                    >
+                      <Avatar member={m} size="sm" />
+                      <span className="truncate">{m.name}</span>
                     </label>
                     <MoneyInput
                       id={`share-${m.id}`}
@@ -217,24 +244,23 @@ function ExpenseForm({
               })}
               <p
                 aria-live="polite"
-                className={`tabular rounded-control px-3 py-2 text-sm font-medium ${
+                className={`tabular flex flex-wrap items-baseline justify-between gap-x-3 rounded-control px-3 py-2 text-sm transition-colors duration-300 ${
                   totalMinor !== null && remainingMinor === 0
                     ? 'bg-pos-soft text-pos'
                     : 'bg-neg-soft text-neg'
                 }`}
               >
-                {t.assigned(
-                  formatMoney(assignedMinor),
-                  totalMinor === null ? '—' : formatMoney(totalMinor),
-                )}
-                {remainingMinor !== null && remainingMinor !== 0 && (
-                  <>
-                    {', '}
-                    {remainingMinor > 0
-                      ? t.remaining(formatMoney(remainingMinor))
-                      : t.over(formatMoney(-remainingMinor))}
-                  </>
-                )}
+                <span>
+                  {t.assigned(
+                    formatMoney(assignedMinor),
+                    totalMinor === null ? '—' : formatMoney(totalMinor),
+                  )}
+                </span>
+                <span className="text-base font-bold">
+                  {remainingMinor !== null && remainingMinor < 0
+                    ? t.over(formatMoney(-remainingMinor))
+                    : t.remaining(formatMoney(remainingMinor ?? 0))}
+                </span>
               </p>
               {submitted && errors.customAmounts && <ErrorText>{errors.customAmounts}</ErrorText>}
               {submitted && errors.customSum && <ErrorText>{errors.customSum}</ErrorText>}

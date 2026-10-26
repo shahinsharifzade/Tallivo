@@ -47,6 +47,8 @@ export interface DraftEvaluation {
   customErrors: Record<Id, string>;
   /** Shares that will be saved (equal mode: computed; custom mode: when all amounts parse). */
   shares: ExpenseShare[] | null;
+  /** Custom mode: the per-member amounts that currently parse (for the live split bar). */
+  validCustomShares: ExpenseShare[];
   /** Custom mode: sum of the amounts that parse. */
   assignedMinor: Minor;
   /** Custom mode: total - assigned (null if the total is invalid). */
@@ -108,6 +110,7 @@ export function evaluateDraft(
 
   let shares: ExpenseShare[] | null = null;
   let assignedMinor = 0;
+  let validCustomShares: ExpenseShare[] = [];
 
   if (draft.mode === 'equal') {
     if (totalMinor !== null && orderedParticipants.length > 0) {
@@ -127,6 +130,7 @@ export function evaluateDraft(
         customErrors[m.id] = moneyErrorMessage(parsed.error);
       }
     }
+    validCustomShares = customShares;
     if (Object.keys(customErrors).length > 0) errors.customAmounts = t.customAmountsInvalid;
     else if (orderedParticipants.length > 0) shares = customShares;
   }
@@ -157,6 +161,7 @@ export function evaluateDraft(
     errors,
     customErrors,
     shares,
+    validCustomShares,
     assignedMinor,
     remainingMinor,
     input,
