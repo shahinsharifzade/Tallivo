@@ -30,6 +30,52 @@ Other scripts:
 To open the app on a phone in the same Wi-Fi, run `npm run dev -- --host` and open the printed
 network address. Note that each browser/device has its own separate data.
 
+## Deploy
+
+The app is a static site: `npm run build` writes everything to `dist/`. No environment variables
+are needed. `public/_redirects` (copied into `dist/`) contains `/* /index.html 200`, so deep
+links such as `/meetups` still load after a refresh. `public/manifest.webmanifest` and
+`public/icons/` make "Add to Home Screen" install it as a standalone app.
+
+### Cloudflare Pages
+
+1. Push the repo to GitHub/GitLab.
+2. Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git**, pick the repo.
+3. Build settings:
+
+   | Setting                | Value           |
+   | ---------------------- | --------------- |
+   | Framework preset       | None (or Vite)  |
+   | Build command          | `npm run build` |
+   | Build output directory | `dist`          |
+   | Root directory         | _(empty)_       |
+
+4. **Save and Deploy**.
+
+Cloudflare Pages already serves `index.html` for unknown paths when the site has no `404.html`.
+It may log that the `/* /index.html 200` rule in `_redirects` is an infinite loop and ignore it;
+that is harmless, deep links still work.
+
+### Netlify
+
+1. Push the repo to GitHub/GitLab.
+2. Netlify → **Add new site → Import an existing project**, pick the repo.
+3. Build settings:
+
+   | Setting           | Value           |
+   | ----------------- | --------------- |
+   | Base directory    | _(empty)_       |
+   | Build command     | `npm run build` |
+   | Publish directory | `dist`          |
+
+4. **Deploy**.
+
+Netlify reads `dist/_redirects` for the SPA fallback. To deploy without Git, run `npm run build`
+and drag the `dist` folder onto **Sites → Add new site → Deploy manually**.
+
+Both hosts use a recent Node.js by default; if a build fails on the Node version, set the
+`NODE_VERSION` environment variable to `20`.
+
 ## Project structure
 
 ```
