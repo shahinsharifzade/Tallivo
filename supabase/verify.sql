@@ -41,8 +41,9 @@ where table_schema = 'public'
 group by column_name, grantee
 order by column_name, grantee;
 
--- 5. Functions. Expected: is_group_member security_definer = true, save_expense = false;
---    anon_can_execute = false and authenticated_can_execute = true for both.
+-- 5. Functions. Expected: 4 rows (delete_meetup and restore_meetup only after
+--    migration_002_meetup_delete.sql). is_group_member security_definer = true, all others
+--    false; anon_can_execute = false and authenticated_can_execute = true for all.
 select p.proname as function_name,
        p.prosecdef as security_definer,
        has_function_privilege('anon', p.oid, 'execute') as anon_can_execute,
@@ -50,7 +51,7 @@ select p.proname as function_name,
 from pg_proc p
 join pg_namespace n on n.oid = p.pronamespace
 where n.nspname = 'public'
-  and p.proname in ('is_group_member', 'save_expense')
+  and p.proname in ('is_group_member', 'save_expense', 'delete_meetup', 'restore_meetup')
 order by p.proname;
 
 -- 6. Members and their linked accounts. Expected: 4 rows, each with an email.

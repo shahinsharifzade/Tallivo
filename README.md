@@ -4,9 +4,15 @@ _Hesab bərabər._ A small shared expense tracker for a fixed group of friends. 
 to a meetup ("hangout"). The app shows who owes whom for a single meetup and across all meetups
 combined, with support for uneven splits and recorded repayments.
 
-Everything runs locally in the browser. There is no backend and no network access, and data is
-stored in `localStorage`. See [docs/FUTURE.md](docs/FUTURE.md) for the planned Supabase and
-deployment path.
+It runs in one of two modes:
+
+- **Shared mode (Supabase):** the four friends sign in and see the same data, stored in a
+  Supabase Postgres database. Only invited, linked accounts can read or write anything.
+- **Local mode:** no backend and no network access; data stays in this browser's
+  `localStorage`. Useful for development and for trying the app out.
+
+See [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) for the one-time database setup and
+[docs/FUTURE.md](docs/FUTURE.md) for ideas not built yet.
 
 ## Install and run
 
@@ -28,12 +34,38 @@ Other scripts:
 | `npm run format`    | Prettier                           |
 
 To open the app on a phone in the same Wi-Fi, run `npm run dev -- --host` and open the printed
-network address. Note that each browser/device has its own separate data.
+network address. In local mode each browser/device has its own separate data.
+
+## Local mode vs shared mode
+
+The mode is chosen at startup from two environment variables (see `.env.example`):
+
+| Variable                        | Value                                              |
+| ------------------------------- | -------------------------------------------------- |
+| `VITE_SUPABASE_URL`             | Project URL, e.g. `https://<project>.supabase.co`  |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | The project's **publishable** key (safe to expose) |
+
+- **Both set → shared mode.** The app shows a sign-in screen first and loads nothing until a
+  linked account is signed in. Put the values in a local `.env` file (never committed) and
+  follow [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) once to create the database.
+- **Either missing → local mode.** For local mode while `.env` exists, override them:
+  `VITE_SUPABASE_URL= npm run dev`.
+
+**Ayarlar** shows the current mode as a badge. In shared mode it also shows who is signed in
+and a sign-out button. Members can be renamed, recolored and added but not deleted, there is no
+"delete everything", and JSON import is hidden (export still works).
+
+Never put any other Supabase key (secret / `service_role`) in `.env`, the host, or the code:
+everything in a `VITE_` variable ends up in the public JavaScript bundle. Access control is
+enforced in the database by Row Level Security.
 
 ## Deploy
 
-The app is a static site: `npm run build` writes everything to `dist/`. No environment variables
-are needed. `public/_redirects` (copied into `dist/`) contains `/* /index.html 200`, so deep
+The app is a static site: `npm run build` writes everything to `dist/`. For shared mode, set
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` as environment variables in the host
+(Cloudflare: **Settings → Variables and Secrets**; Netlify: **Site configuration → Environment
+variables**). Vite reads them at **build** time, so redeploy after changing them. Without them the
+deployed site runs in local mode. `public/_redirects` (copied into `dist/`) contains `/* /index.html 200`, so deep
 links such as `/meetups` still load after a refresh. `public/manifest.webmanifest` and
 `public/icons/` make "Add to Home Screen" install it as a standalone app.
 
@@ -90,15 +122,19 @@ src/
 │  └─ selectors.ts    totals per group / member, participants
 ├─ data/            Persistence
 │  ├─ repository.ts   Repository interface + Snapshot type (the DB seam)
-│  ├─ localStorageRepository.ts   Current implementation (key "tallivo:v1")
+│  ├─ localStorageRepository.ts   Local mode (key "tallivo:v1")
+│  ├─ supabaseRepository.ts       Shared mode (row/error mapping, RPC calls)
+│  ├─ supabaseClient.ts           Creates the client from the two VITE_ variables
 │  ├─ snapshot.ts     Validation + schema migration for stored data and imported JSON
 │  └─ seed.ts         Default members on first run
-├─ state/           React Context: AppDataProvider, actions (use cases), read hooks
-├─ components/      Shared UI (layout, tab bar, chips, lists, dialog, inputs)
+├─ state/           React Context: AppDataProvider, actions (use cases), read hooks, backend
+├─ components/      Shared UI (layout, tab bar, chips, lists, dialog, inputs), AuthGate,
+│                   DataRoot (local vs. signed-in Supabase)
 ├─ pages/           Screens (Overview, Meetups, MeetupDetail, ExpenseForm, Payment,
-│                   History, Settings) and the dev-only /debug page
+│                   History, Settings, Login) and the dev-only /debug page
 ├─ i18n/az.ts       All user-facing text (Azerbaijani)
 └─ lib/             Small helpers (ids, dates, formatting, file download)
+supabase/           SQL to run in the Supabase SQL Editor (schema, migrations, checks)
 ```
 
 Dependency direction: `pages/components → state → data → domain`. Components never touch
@@ -106,9 +142,10 @@ Dependency direction: `pages/components → state → data → domain`. Componen
 `src/state/hooks.ts`, which call `src/domain`. `src/main.tsx` is the only place that picks the
 storage implementation.
 
-Runtime dependencies: `react`, `react-dom`, `react-router-dom`, and `@fontsource/inter` (a
-locally bundled font with Latin Extended glyphs such as Ə/ə, so names render correctly without
-loading anything from the internet).
+Runtime dependencies: `react`, `react-dom`, `react-router-dom`, `@supabase/supabase-js` (shared
+mode only talks to the configured Supabase project), and `@fontsource/inter` (a locally bundled
+font with Latin Extended glyphs such as Ə/ə, so names render correctly without loading anything
+from the internet).
 
 ## How the balance logic works
 
@@ -159,8 +196,9 @@ exists in development (`npm run dev`), not in production builds.
 
 ### Full check through the real UI
 
-Start from empty data: **Ayarlar → Hamısını sil → confirm** (or use a fresh browser profile). The
-members are Əşrəf, Ayxan, Şahin, Seyid in that order.
+Do this in **local mode**, so the test data does not end up in the shared database. Start from
+empty data: **Ayarlar → Hamısını sil → confirm** (or use a fresh browser profile). The members
+are Əşrəf, Ayxan, Şahin, Seyid in that order.
 
 Add the three meetups. For each one: **Görüşlər → Yeni görüş**, type the name, **Görüşü yarat**,
 then **Xərc əlavə et** and fill in the expense:
@@ -205,7 +243,12 @@ it.
 
 ## Backups
 
-Data lives only in this browser's `localStorage`, which can be cleared by the browser or the user.
+**Shared mode:** data lives in the Supabase database; nothing is ever hard-deleted from the app.
+**Ayarlar → JSON ixrac et** downloads a copy of everything (same format as local mode). Do this
+now and then, especially because free Supabase projects pause when unused (see
+[docs/FUTURE.md](docs/FUTURE.md)).
+
+**Local mode:** data lives only in this browser's `localStorage`, which can be cleared by the browser or the user.
 Use **Ayarlar → JSON ixrac et** regularly. **JSON idxal et** validates the file completely
 (structure, amounts, shares summing to totals, references) and only then replaces all current
 data. If stored data is ever unreadable, the app starts empty and keeps the unreadable copy under

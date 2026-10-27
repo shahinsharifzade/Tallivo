@@ -45,6 +45,16 @@ export interface Repository {
   updateMeetup(id: Id, patch: Partial<MeetupInput>): Promise<Meetup>;
   softDeleteMeetup(id: Id, deletedAt?: IsoDateTime): Promise<void>;
   restoreMeetup(id: Id): Promise<void>;
+  /**
+   * All-or-nothing: soft-deletes the meetup and all of its active expenses with one shared
+   * deletedAt. Does nothing if the meetup is already deleted.
+   */
+  softDeleteMeetupWithExpenses(id: Id): Promise<void>;
+  /**
+   * All-or-nothing: restores the meetup and exactly the expenses deleted together with it
+   * (same deletedAt). Does nothing if the meetup is not deleted.
+   */
+  restoreMeetupWithExpenses(id: Id): Promise<void>;
 
   listExpenses(): Promise<Expense[]>;
   createExpense(input: ExpenseInput): Promise<Expense>;

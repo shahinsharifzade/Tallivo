@@ -7,8 +7,10 @@ The app only ever uses the project URL and the **publishable** key. Never put an
 `.env`, Netlify, or the code.
 
 1. **Create the tables.** Open **SQL Editor → New query**, paste all of
-   [`supabase/schema.sql`](../supabase/schema.sql) and click **Run**. It is safe to run again
-   later; it does not delete data.
+   [`supabase/schema.sql`](../supabase/schema.sql) and click **Run**. Then do the same with
+   [`supabase/migration_002_meetup_delete.sql`](../supabase/migration_002_meetup_delete.sql)
+   (deleting/restoring a meetup together with its expenses). Both are safe to run again later;
+   they do not delete data.
 
 2. **Create the four users.** Go to **Authentication → Users → Add user → Create new user**. For
    each person, enter their email and a password and tick **Auto Confirm User**. Give each person
@@ -40,6 +42,14 @@ The app only ever uses the project URL and the **publishable** key. Never put an
 7. **Run the app.** Make sure `.env` contains `VITE_SUPABASE_URL` and
    `VITE_SUPABASE_PUBLISHABLE_KEY` (see `.env.example`), then run `npm run dev`, open
    <http://localhost:5173> and sign in with one of the four accounts.
+
+## Updating an existing database
+
+If you already ran `schema.sql` earlier, only run the migration files you have not run yet, in
+order, in the SQL Editor:
+
+- `supabase/migration_002_meetup_delete.sql`: without it, deleting or restoring a meetup in
+  the app fails with "Server bu əməliyyat üçün hazır deyil".
 
 ## Adding or changing people later
 

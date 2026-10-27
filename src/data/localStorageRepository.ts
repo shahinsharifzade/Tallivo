@@ -173,6 +173,30 @@ export class LocalStorageRepository implements Repository {
     this.setDeletedAt('meetups', id, undefined);
   }
 
+  async softDeleteMeetupWithExpenses(id: Id): Promise<void> {
+    this.mutate((s) => {
+      const meetup = LocalStorageRepository.find(s.meetups, id);
+      if (meetup.deletedAt) return;
+      const deletedAt = nowIso();
+      meetup.deletedAt = deletedAt;
+      for (const e of s.expenses) {
+        if (e.meetupId === id && !e.deletedAt) e.deletedAt = deletedAt;
+      }
+    });
+  }
+
+  async restoreMeetupWithExpenses(id: Id): Promise<void> {
+    this.mutate((s) => {
+      const meetup = LocalStorageRepository.find(s.meetups, id);
+      const deletedAt = meetup.deletedAt;
+      if (!deletedAt) return;
+      for (const e of s.expenses) {
+        if (e.meetupId === id && e.deletedAt === deletedAt) e.deletedAt = undefined;
+      }
+      meetup.deletedAt = undefined;
+    });
+  }
+
   // ---- expenses ----
 
   async listExpenses(): Promise<Expense[]> {

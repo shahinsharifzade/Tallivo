@@ -11,7 +11,8 @@ export type AppErrorCode =
   | 'network'
   | 'notAllowed'
   | 'unsupported'
-  | 'badServerData';
+  | 'badServerData'
+  | 'serverOutdated';
 
 /** Error with a stable code that the UI maps to a localized message. */
 export class AppError extends Error {

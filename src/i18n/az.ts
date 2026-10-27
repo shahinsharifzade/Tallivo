@@ -260,6 +260,8 @@ export const az = {
     notAllowed: 'Bu əməliyyat üçün icazəniz yoxdur. Çıxış edib yenidən daxil olun.',
     unsupported: 'Bu əməliyyat ortaq rejimdə mövcud deyil.',
     badServerData: 'Serverdən gələn məlumat düzgün deyil.',
+    serverOutdated:
+      'Server bu əməliyyat üçün hazır deyil. Qrupun adminindən bazanı yeniləməsini xahiş edin.',
     unknown: 'Gözlənilməz xəta baş verdi.',
   },
   debug: {

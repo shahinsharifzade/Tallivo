@@ -16,7 +16,6 @@ import { AppError } from '../data/errors';
 import type { ExpenseInput, MeetupInput, Repository, SettlementInput } from '../data/repository';
 import { seedDefaultMembers } from '../data/seed';
 import { parseSnapshotJson, serializeSnapshot } from '../data/snapshot';
-import { nowIso } from '../lib/dates';
 
 export interface ImportSummary {
   members: number;
@@ -131,39 +130,14 @@ export function createActions(repository: Repository, reload: () => Promise<void
       await after(repository.updateMeetup(id, normalizeMeetup(input)));
     },
 
-    // Deleting a meetup also soft-deletes its active expenses with the same timestamp,
-    // so restoring the meetup can bring back exactly those expenses.
+    // Deleting a meetup also soft-deletes its active expenses with the same timestamp, in one
+    // atomic repository call, so restoring the meetup brings back exactly those expenses.
     async deleteMeetup(id) {
-      const deletedAt = nowIso();
-      const expenses = await repository.listExpenses();
-      await after(
-        (async () => {
-          await repository.softDeleteMeetup(id, deletedAt);
-          for (const e of expenses) {
-            if (e.meetupId === id && !e.deletedAt)
-              await repository.softDeleteExpense(e.id, deletedAt);
-          }
-        })(),
-      );
+      await after(repository.softDeleteMeetupWithExpenses(id));
     },
 
     async restoreMeetup(id) {
-      const [meetups, expenses] = await Promise.all([
-        repository.listMeetups(),
-        repository.listExpenses(),
-      ]);
-      const meetup = meetups.find((m) => m.id === id);
-      if (!meetup) throw new AppError('notFound', id);
-      await after(
-        (async () => {
-          for (const e of expenses) {
-            if (e.meetupId === id && meetup.deletedAt && e.deletedAt === meetup.deletedAt) {
-              await repository.restoreExpense(e.id);
-            }
-          }
-          await repository.restoreMeetup(id);
-        })(),
-      );
+      await after(repository.restoreMeetupWithExpenses(id));
     },
 
     async createExpense(input) {

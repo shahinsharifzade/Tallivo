@@ -172,6 +172,8 @@ function toAppError(error: PostgrestError, status: number, fallback: AppErrorCod
     return new AppError('notAllowed', detail);
   }
   if (code === 'PGRST116' || code === '23503') return new AppError('notFound', detail);
+  // The RPC does not exist yet: a migration file has not been run in the SQL Editor.
+  if (code === 'PGRST202') return new AppError('serverOutdated', detail);
   if (code === '23505') return new AppError('invalidMemberName', detail);
   if (code === 'P0001') {
     const prefix = error.message.split(':', 1)[0] ?? '';
@@ -206,6 +208,11 @@ export async function fetchLinkedMemberName(
   if (res.error) throw toAppError(res.error, res.status, 'notAllowed');
   const row = res.data as { name: string } | null;
   return row?.name ?? null;
+}
+
+/** Throws a mapped AppError if the call failed (for calls that return no data). */
+function ensureOk(res: Omit<Result<unknown>, 'data'>, fallback: AppErrorCode): void {
+  if (res.error) throw toAppError(res.error, res.status, fallback);
 }
 
 function noteValue(note: string | undefined): string | null {
@@ -305,6 +312,15 @@ export class SupabaseRepository implements Repository {
     await this.setDeletedAt('meetups', id, null);
   }
 
+  // Both cascade in one transaction in the database (supabase/migration_002_meetup_delete.sql).
+  async softDeleteMeetupWithExpenses(id: Id): Promise<void> {
+    ensureOk(await this.client.rpc('delete_meetup', { p_id: id }), 'notFound');
+  }
+
+  async restoreMeetupWithExpenses(id: Id): Promise<void> {
+    ensureOk(await this.client.rpc('restore_meetup', { p_id: id }), 'notFound');
+  }
+
   // ---- expenses (writes go through the save_expense RPC so shares change atomically) ----
 
   async listExpenses(): Promise<Expense[]> {
@@ -329,7 +345,16 @@ export class SupabaseRepository implements Repository {
     };
     const res = await this.client.rpc('save_expense', { p });
     const savedId = unwrap<string>(res, 'invalidExpense');
-    return this.getExpense(savedId);
+    // The expense is saved at this point. If reading it back fails, do not report an error
+    // (the user would save it again and create a duplicate); return what was sent instead.
+    // The reload after every write replaces it with the stored row.
+    try {
+      return await this.getExpense(savedId);
+    } catch (e) {
+      console.error('[tallivo] Saved expense could not be read back', e);
+      const now = nowIso();
+      return { ...input, id: savedId, createdAt: now, updatedAt: now };
+    }
   }
 
   async createExpense(input: ExpenseInput): Promise<Expense> {

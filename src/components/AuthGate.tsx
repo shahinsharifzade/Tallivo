@@ -89,10 +89,15 @@ export function AuthGate({
   }, [client, userId, attempt]);
 
   const signOut = useCallback(async () => {
-    const { error } = await client.auth.signOut({ scope: 'local' });
-    if (error) console.error('[tallivo] Sign-out failed', error);
-    // The local session is gone either way; show the sign-in screen.
-    setSession(null);
+    try {
+      const { error } = await client.auth.signOut({ scope: 'local' });
+      if (error) console.error('[tallivo] Sign-out failed', error);
+    } catch (e) {
+      console.error('[tallivo] Sign-out failed', e);
+    } finally {
+      // Show the sign-in screen (and drop all loaded data) even if the request failed.
+      setSession(null);
+    }
   }, [client]);
 
   // A lookup for a previous user (or none yet) counts as still loading.
