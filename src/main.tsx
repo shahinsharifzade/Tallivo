@@ -7,21 +7,27 @@ import '@fontsource/inter/700.css';
 import './index.css';
 import { App } from './App';
 import { LocalStorageRepository } from './data/localStorageRepository';
+import { createSupabaseClientFromEnv } from './data/supabaseClient';
+import { SupabaseRepository } from './data/supabaseRepository';
 import { initTheme } from './lib/theme';
-import { AppDataProvider } from './state/AppDataProvider';
+import { BackendContext, type Backend } from './state/backend';
 
 initTheme();
 
-// The only place that picks a concrete storage backend.
-const repository = new LocalStorageRepository();
+// The only place that picks a concrete storage backend: Supabase (with sign-in) when both
+// VITE_SUPABASE_* variables are set, otherwise this browser's localStorage.
+const client = createSupabaseClientFromEnv();
+const backend: Backend = client
+  ? { mode: 'supabase', client, repository: new SupabaseRepository(client) }
+  : { mode: 'local', repository: new LocalStorageRepository() };
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Root element not found');
 
 createRoot(root).render(
   <StrictMode>
-    <AppDataProvider repository={repository}>
+    <BackendContext.Provider value={backend}>
       <App />
-    </AppDataProvider>
+    </BackendContext.Provider>
   </StrictMode>,
 );

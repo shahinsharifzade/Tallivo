@@ -8,8 +8,8 @@ import { ConfirmDialog } from './ConfirmDialog';
 
 type Feedback = { kind: 'success' | 'error'; text: string } | null;
 
-/** Export / import of all data as a JSON backup file. */
-export function BackupPanel() {
+/** Export / import of all data as a JSON backup file. Import is local mode only. */
+export function BackupPanel({ allowImport }: { allowImport: boolean }) {
   const actions = useActions();
   const fileInput = useRef<HTMLInputElement>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -46,25 +46,35 @@ export function BackupPanel() {
   return (
     <section className="rounded-card bg-surface p-4 shadow-card ring-1 ring-line">
       <h2 className="font-semibold">{az.backup.title}</h2>
-      <p className="mt-1 text-sm text-ink-soft">{az.backup.description}</p>
+      <p className="mt-1 text-sm text-ink-soft">
+        {allowImport ? az.backup.description : az.backup.descriptionShared}
+      </p>
       <div className="mt-3 flex gap-2">
         <button type="button" className={buttonClass} onClick={handleExport}>
           {az.backup.export}
         </button>
-        <button type="button" className={buttonClass} onClick={() => fileInput.current?.click()}>
-          {az.backup.import}
-        </button>
-        <input
-          ref={fileInput}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          aria-label={az.backup.import}
-          onChange={(e) => {
-            setPendingFile(e.target.files?.[0] ?? null);
-            e.target.value = '';
-          }}
-        />
+        {allowImport && (
+          <>
+            <button
+              type="button"
+              className={buttonClass}
+              onClick={() => fileInput.current?.click()}
+            >
+              {az.backup.import}
+            </button>
+            <input
+              ref={fileInput}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              aria-label={az.backup.import}
+              onChange={(e) => {
+                setPendingFile(e.target.files?.[0] ?? null);
+                e.target.value = '';
+              }}
+            />
+          </>
+        )}
       </div>
       {feedback && (
         <p

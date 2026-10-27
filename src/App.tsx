@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { AppLayout } from './components/AppLayout';
+import { DataRoot } from './components/DataRoot';
 import { ExpenseFormPage } from './pages/expense/ExpenseFormPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { MeetupDetailPage } from './pages/MeetupDetailPage';
@@ -20,7 +20,7 @@ export function App() {
       <Suspense fallback={null}>
         <Routes>
           {DebugPage && <Route path="/debug" element={<DebugPage />} />}
-          <Route element={<AppLayout />}>
+          <Route element={<DataRoot />}>
             <Route index element={<OverviewPage />} />
             <Route path="meetups" element={<MeetupsPage />} />
             <Route path="meetups/new" element={<MeetupFormPage />} />

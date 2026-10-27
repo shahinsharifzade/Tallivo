@@ -35,6 +35,10 @@ export function useActions(): AppActions {
   return useAppDataContext().actions;
 }
 
+export function useRetryLoad(): () => Promise<void> {
+  return useAppDataContext().retry;
+}
+
 /** Overall balances, simplified debts and total spend across all meetups and settlements. */
 export function useOverallSummary() {
   const { members, expenses, settlements } = useAppData();

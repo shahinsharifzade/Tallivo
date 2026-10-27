@@ -2,10 +2,11 @@ import { useEffect, type ReactNode } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { az } from '../i18n/az';
 import { useSettledTransition } from '../state/celebration';
-import { useAppData, useOverallSummary } from '../state/hooks';
+import { useAppData, useOverallSummary, useRetryLoad } from '../state/hooks';
 import { FeedbackProvider } from './FeedbackProvider';
 import { Logo } from './Logo';
 import { CalendarIcon, ClockIcon, HomeIcon, SettingsIcon } from './icons';
+import { buttonClass } from './styles';
 
 const tabs: { to: string; label: string; icon: ReactNode; end?: boolean }[] = [
   { to: '/', label: az.nav.overview, icon: <HomeIcon />, end: true },
@@ -24,7 +25,8 @@ function ScrollToTop() {
 
 /** App shell: brand header, page outlet, bottom tab bar (mobile) / top nav (desktop). */
 export function AppLayout() {
-  const { status } = useAppData();
+  const { status, stale, loadError } = useAppData();
+  const retry = useRetryLoad();
   const { pathname } = useLocation();
   const { settled } = useOverallSummary();
   const celebration = useSettledTransition(settled, status === 'ready');
@@ -71,9 +73,32 @@ export function AppLayout() {
             <p className="py-10 text-center text-ink-muted">{az.app.loading}</p>
           )}
           {status === 'error' && (
-            <p role="alert" className="py-10 text-center text-neg">
-              {az.app.loadError}
-            </p>
+            <div role="alert" className="py-10 text-center">
+              <p className="text-neg">{az.app.loadError}</p>
+              {loadError && <p className="mt-1 text-sm text-ink-muted">{loadError}</p>}
+              <button
+                type="button"
+                className={buttonClass('secondary', 'mt-4')}
+                onClick={() => void retry()}
+              >
+                {az.app.retry}
+              </button>
+            </div>
+          )}
+          {status === 'ready' && stale && (
+            <div
+              role="alert"
+              className="mb-4 flex items-center gap-3 rounded-control bg-neg-soft px-3 py-2 text-sm text-neg"
+            >
+              <p className="flex-1">{az.app.staleBanner}</p>
+              <button
+                type="button"
+                className={buttonClass('secondary', 'shrink-0')}
+                onClick={() => void retry()}
+              >
+                {az.app.retry}
+              </button>
+            </div>
           )}
           {status === 'ready' && (
             // Keyed by path so each screen gets the short fade/slide entrance.

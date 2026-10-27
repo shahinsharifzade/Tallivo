@@ -9,6 +9,7 @@ import { MAX_NAME_LENGTH, validateMemberName, type Member } from '../domain';
 import { az } from '../i18n/az';
 import { MEMBER_PALETTE, memberColor } from '../lib/memberColors';
 import { setThemePreference, useThemePreference, type ThemePreference } from '../lib/theme';
+import { useAccount, useBackend } from '../state/backend';
 import { useActions, useAppData, useReferencedMemberIds } from '../state/hooks';
 import { useFeedback } from '../state/feedback';
 import { useSubmit } from '../state/useSubmit';
@@ -25,7 +26,8 @@ function MemberRow({
   member: Member;
   members: Member[];
   inUse: boolean;
-  onDelete: () => void;
+  /** Absent when members cannot be deleted at all (shared mode). */
+  onDelete?: () => void;
 }) {
   const actions = useActions();
   const { error, setError, run } = useSubmit();
@@ -75,7 +77,7 @@ function MemberRow({
             }
           }}
         />
-        {inUse ? (
+        {!onDelete ? null : inUse ? (
           <span className="shrink-0">
             <Badge>{t.memberInUse}</Badge>
           </span>
@@ -127,6 +129,40 @@ function MemberRow({
   );
 }
 
+/** Storage mode badge, and in shared mode the signed-in member with a sign-out button. */
+function AccountCard({ shared }: { shared: boolean }) {
+  const account = useAccount();
+  const [signingOut, setSigningOut] = useState(false);
+  return (
+    <Card>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="font-semibold text-ink">{t.accountTitle}</h2>
+        <Badge>{shared ? t.modeShared : t.modeLocal}</Badge>
+      </div>
+      {account ? (
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <p className="min-w-0 break-words text-sm text-ink-soft">
+            {t.signedInAs(account.memberName)}
+          </p>
+          <button
+            type="button"
+            className={buttonClass('secondary', 'shrink-0')}
+            disabled={signingOut}
+            onClick={async () => {
+              setSigningOut(true);
+              await account.signOut();
+            }}
+          >
+            {az.auth.signOut}
+          </button>
+        </div>
+      ) : (
+        <p className="mt-1 text-sm text-ink-muted">{t.modeLocalHint}</p>
+      )}
+    </Card>
+  );
+}
+
 function ThemeCard() {
   const preference = useThemePreference();
   const options: ThemePreference[] = ['system', 'light', 'dark'];
@@ -159,6 +195,7 @@ function ThemeCard() {
 
 export function SettingsPage() {
   const { members } = useAppData();
+  const shared = useBackend().mode === 'supabase';
   const referenced = useReferencedMemberIds();
   const actions = useActions();
   const addSubmit = useSubmit();
@@ -199,8 +236,12 @@ export function SettingsPage() {
       <PageHeader title={t.title} />
       {generalSubmit.error && <ErrorText>{generalSubmit.error}</ErrorText>}
 
+      <AccountCard shared={shared} />
+
       <Card>
-        <SectionTitle hint={t.membersHint}>{t.membersTitle}</SectionTitle>
+        <SectionTitle hint={shared ? t.membersHintShared : t.membersHint}>
+          {t.membersTitle}
+        </SectionTitle>
         <ul className="divide-y divide-line">
           {members.map((m) => (
             <MemberRow
@@ -209,7 +250,7 @@ export function SettingsPage() {
               member={m}
               members={members}
               inUse={referenced.has(m.id)}
-              onDelete={() => setMemberToDelete(m)}
+              onDelete={shared ? undefined : () => setMemberToDelete(m)}
             />
           ))}
         </ul>
@@ -239,23 +280,26 @@ export function SettingsPage() {
 
       <ThemeCard />
 
-      <BackupPanel />
+      <BackupPanel allowImport={!shared} />
 
-      <Card>
-        <SectionTitle hint={t.resetHint}>{t.resetTitle}</SectionTitle>
-        <button
-          type="button"
-          className={buttonClass('danger', 'ring-1 ring-neg/30')}
-          onClick={() => setConfirmReset(true)}
-        >
-          {t.resetButton}
-        </button>
-        {resetDone && (
-          <p role="status" className="mt-2 text-sm text-pos">
-            {t.resetDone}
-          </p>
-        )}
-      </Card>
+      {/* Shared mode never hard-deletes anything, so there is no reset there. */}
+      {!shared && (
+        <Card>
+          <SectionTitle hint={t.resetHint}>{t.resetTitle}</SectionTitle>
+          <button
+            type="button"
+            className={buttonClass('danger', 'ring-1 ring-neg/30')}
+            onClick={() => setConfirmReset(true)}
+          >
+            {t.resetButton}
+          </button>
+          {resetDone && (
+            <p role="status" className="mt-2 text-sm text-pos">
+              {t.resetDone}
+            </p>
+          )}
+        </Card>
+      )}
 
       <ConfirmDialog
         open={memberToDelete !== null}

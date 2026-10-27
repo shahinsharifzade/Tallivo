@@ -7,7 +7,11 @@ export type AppErrorCode =
   | 'invalidExpense'
   | 'invalidSettlement'
   | 'meetupDeleted'
-  | 'importInvalid';
+  | 'importInvalid'
+  | 'network'
+  | 'notAllowed'
+  | 'unsupported'
+  | 'badServerData';
 
 /** Error with a stable code that the UI maps to a localized message. */
 export class AppError extends Error {
