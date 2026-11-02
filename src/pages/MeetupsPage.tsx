@@ -12,12 +12,13 @@ import { formatDate } from '../lib/format';
 import { meetupIcon } from '../lib/meetupIcon';
 import { useCelebrate } from '../state/celebrate';
 import { useFeedback } from '../state/feedback';
-import { useActions, useMeetupList } from '../state/hooks';
+import { useActions, useCurrentMember, useMeetupList } from '../state/hooks';
 import { useSubmit } from '../state/useSubmit';
 
 export function MeetupsPage() {
   const items = useMeetupList();
   const actions = useActions();
+  const { isAdmin } = useCurrentMember();
   const feedback = useFeedback();
   const { error, run } = useSubmit();
   const { newMeetupId, clearNewMeetup } = useCelebrate();
@@ -49,7 +50,7 @@ export function MeetupsPage() {
           <ErrorText>{error}</ErrorText>
         </div>
       )}
-      {items.length > 0 && (
+      {isAdmin && items.length > 0 && (
         <p className="-mt-2 mb-3 text-sm text-ink-muted">{az.feedback.swipeHint}</p>
       )}
       {items.length === 0 ? (
@@ -77,6 +78,7 @@ export function MeetupsPage() {
               <SwipeToDelete
                 className="rounded-card shadow-card"
                 label={az.common.delete}
+                disabled={!isAdmin}
                 onDelete={() => swipeDelete(meetup.id, meetup.title)}
               >
                 <Link

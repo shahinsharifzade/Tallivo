@@ -12,7 +12,13 @@ import { Card, EmptyState, ErrorText, PageHeader, SectionTitle } from '../compon
 import { formatMoney, type Expense } from '../domain';
 import { az } from '../i18n/az';
 import { formatDate } from '../lib/format';
-import { useActions, useAppData, useMeetup, useMeetupSummary } from '../state/hooks';
+import {
+  useActions,
+  useAppData,
+  useCurrentMember,
+  useMeetup,
+  useMeetupSummary,
+} from '../state/hooks';
 import { useFeedback } from '../state/feedback';
 import { useSubmit } from '../state/useSubmit';
 import { NotFoundPage } from './NotFoundPage';
@@ -23,6 +29,7 @@ export function MeetupDetailPage() {
   const { meetupId = '' } = useParams();
   const navigate = useNavigate();
   const actions = useActions();
+  const { isAdmin } = useCurrentMember();
   const { members } = useAppData();
   const { meetup, expenses } = useMeetup(meetupId);
   const summary = useMeetupSummary(meetupId);
@@ -78,15 +85,17 @@ export function MeetupDetailPage() {
               >
                 <PencilIcon />
               </Link>
-              <button
-                type="button"
-                className={buttonClass('danger', 'px-3')}
-                onClick={() => setConfirmDeleteMeetup(true)}
-                aria-label={az.common.delete}
-                title={az.common.delete}
-              >
-                <TrashIcon />
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  className={buttonClass('danger', 'px-3')}
+                  onClick={() => setConfirmDeleteMeetup(true)}
+                  aria-label={az.common.delete}
+                  title={az.common.delete}
+                >
+                  <TrashIcon />
+                </button>
+              )}
             </>
           )
         }
@@ -97,13 +106,15 @@ export function MeetupDetailPage() {
       {isDeleted ? (
         <Card className="space-y-3">
           <p className="text-ink-soft">{t.deletedBanner}</p>
-          <button
-            type="button"
-            className={buttonClass('secondary')}
-            onClick={() => run(() => actions.restoreMeetup(meetup.id))}
-          >
-            {az.common.restore}
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              className={buttonClass('secondary')}
+              onClick={() => run(() => actions.restoreMeetup(meetup.id))}
+            >
+              {az.common.restore}
+            </button>
+          )}
         </Card>
       ) : (
         <>
@@ -131,12 +142,15 @@ export function MeetupDetailPage() {
           ) : (
             <>
               <Card>
-                <SectionTitle hint={az.feedback.swipeHint}>{t.expensesTitle}</SectionTitle>
+                <SectionTitle hint={isAdmin ? az.feedback.swipeHint : undefined}>
+                  {t.expensesTitle}
+                </SectionTitle>
                 <ul className="stagger divide-y divide-line">
                   {expenses.map((expense) => (
                     <li key={expense.id}>
                       <SwipeToDelete
                         label={az.common.delete}
+                        disabled={!isAdmin}
                         onDelete={() => swipeDeleteExpense(expense)}
                       >
                         <div className="flex items-start gap-3 bg-surface py-3">
@@ -169,15 +183,17 @@ export function MeetupDetailPage() {
                             >
                               <PencilIcon />
                             </Link>
-                            <button
-                              type="button"
-                              className={buttonClass('danger', 'px-3')}
-                              onClick={() => setExpenseToDelete(expense)}
-                              aria-label={`${az.common.delete}: ${expense.title}`}
-                              title={az.common.delete}
-                            >
-                              <TrashIcon />
-                            </button>
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                className={buttonClass('danger', 'px-3')}
+                                onClick={() => setExpenseToDelete(expense)}
+                                aria-label={`${az.common.delete}: ${expense.title}`}
+                                title={az.common.delete}
+                              >
+                                <TrashIcon />
+                              </button>
+                            )}
                           </div>
                         </div>
                       </SwipeToDelete>

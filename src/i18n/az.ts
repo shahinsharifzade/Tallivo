@@ -230,7 +230,11 @@ export const az = {
   },
   history: {
     title: 'Tarixçə',
-    subtitle: 'Bütün xərclər, ödənişlər və görüşlər, silinənlər də daxil.',
+    subtitle: 'Bütün xərclər və ödənişlər.',
+    deletedSubtitle: 'Silinmiş qeydlər. Bərpa etdikdə yenidən hesablamalara qayıdır.',
+    showDeleted: (count: number) => `Silinənlər (${count})`,
+    showActive: 'Tarixçəyə qayıt',
+    deletedEmpty: 'Silinmiş qeyd yoxdur.',
     expense: 'Xərc',
     settlement: 'Ödəniş',
     meetup: 'Görüş',

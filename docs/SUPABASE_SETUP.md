@@ -65,8 +65,13 @@ order, in the SQL Editor:
   running it, choose the admin as described in step 5. Until someone is admin, nobody can rename
   or add members from the app.
 
-**If you run `schema.sql` again, run migration 003 again right after it.** `schema.sql` restores
-the older policy that lets any group member add members. The admin flag itself is kept.
+- `supabase/migration_004_admin_soft_delete.sql`: only the admin can delete and restore meetups,
+  expenses and payments. Until you run it, the app hides those actions from other members, but
+  the database still allows them.
+
+**If you run `schema.sql` again, run migrations 003 and 004 again right after it.** `schema.sql`
+restores the older policies that let any group member add members and delete records. The admin
+flag itself is kept.
 
 ## Adding or changing people later
 

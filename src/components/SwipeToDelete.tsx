@@ -6,6 +6,8 @@ interface SwipeToDeleteProps {
   /** Text revealed behind the row while swiping. */
   label: string;
   className?: string;
+  /** Renders the row without the gesture, for people who may not delete it. */
+  disabled?: boolean;
   children: ReactNode;
 }
 
@@ -16,7 +18,13 @@ const LOCK_PX = 8;
  * and a click is suppressed after a drag. Keyboard and screen-reader users use the row's
  * regular delete button instead.
  */
-export function SwipeToDelete({ onDelete, label, className = '', children }: SwipeToDeleteProps) {
+export function SwipeToDelete({
+  onDelete,
+  label,
+  className = '',
+  disabled = false,
+  children,
+}: SwipeToDeleteProps) {
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
@@ -62,6 +70,8 @@ export function SwipeToDelete({ onDelete, label, className = '', children }: Swi
       setDx(0);
     }
   };
+
+  if (disabled) return <div className={className}>{children}</div>;
 
   return (
     <div className={`relative overflow-hidden ${className}`}>

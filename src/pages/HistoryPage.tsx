@@ -3,47 +3,61 @@ import { Link } from 'react-router-dom';
 import { Avatar } from '../components/Avatar';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { HistoryArt } from '../components/illustrations';
-import { ArrowRightIcon } from '../components/icons';
+import { ArrowRightIcon, TrashIcon } from '../components/icons';
 import { buttonClass } from '../components/styles';
-import { SwipeToDelete } from '../components/SwipeToDelete';
 import { Badge, EmptyState, ErrorText, PageHeader } from '../components/ui';
-import { formatMoney, type Settlement } from '../domain';
+import { formatMoney } from '../domain';
 import { az } from '../i18n/az';
 import { formatDate } from '../lib/format';
-import { useActions, useAppData, useHistory, type HistoryItem } from '../state/hooks';
+import {
+  useActions,
+  useAppData,
+  useCurrentMember,
+  useHistory,
+  type HistoryItem,
+} from '../state/hooks';
 import { useFeedback } from '../state/feedback';
 import { useSubmit } from '../state/useSubmit';
 
 const t = az.history;
 
 export function HistoryPage() {
-  const items = useHistory();
+  const history = useHistory();
+  const { isAdmin } = useCurrentMember();
   const { members } = useAppData();
   const actions = useActions();
   const { error, run } = useSubmit();
   const feedback = useFeedback();
-  const [settlementToDelete, setSettlementToDelete] = useState<Settlement | null>(null);
+  const [entryToDelete, setEntryToDelete] = useState<HistoryItem | null>(null);
+  // Only admins can restore, so only they get the view of deleted records.
+  const [viewDeleted, setViewDeleted] = useState(false);
+  const showingDeleted = isAdmin && viewDeleted;
+  const items = history.filter((entry) => !!entry.item.deletedAt === showingDeleted);
+  const deletedCount = history.filter((entry) => entry.item.deletedAt).length;
   const memberOf = (id: string) => members.find((m) => m.id === id);
   const nameOf = (id: string) => memberOf(id)?.name ?? '?';
 
-  const restore = (entry: HistoryItem) =>
-    run(() => {
-      if (entry.kind === 'expense') return actions.restoreExpense(entry.item.id);
-      if (entry.kind === 'settlement') return actions.restoreSettlement(entry.item.id);
-      return actions.restoreMeetup(entry.item.id);
-    });
-
-  const swipeDeleteSettlement = async (s: Settlement) => {
-    if (await run(() => actions.deleteSettlement(s.id))) {
-      const label = `${nameOf(s.fromMemberId)} → ${nameOf(s.toMemberId)}`;
-      feedback.undoable(az.feedback.deleted(label), () => actions.restoreSettlement(s.id));
-    }
+  const restoreAction = (entry: HistoryItem) => {
+    if (entry.kind === 'expense') return actions.restoreExpense(entry.item.id);
+    if (entry.kind === 'settlement') return actions.restoreSettlement(entry.item.id);
+    return actions.restoreMeetup(entry.item.id);
   };
 
-  const deleteSettlement = async () => {
-    const s = settlementToDelete;
-    setSettlementToDelete(null);
-    if (s) await run(() => actions.deleteSettlement(s.id));
+  const labelOf = (entry: HistoryItem) =>
+    entry.kind === 'settlement'
+      ? `${nameOf(entry.item.fromMemberId)} → ${nameOf(entry.item.toMemberId)}`
+      : entry.item.title;
+
+  const confirmDelete = async () => {
+    const entry = entryToDelete;
+    setEntryToDelete(null);
+    if (!entry) return;
+    const deleted = await run(() =>
+      entry.kind === 'settlement'
+        ? actions.deleteSettlement(entry.item.id)
+        : actions.deleteExpense(entry.item.id),
+    );
+    if (deleted) feedback.undoable(az.feedback.deleted(labelOf(entry)), () => restoreAction(entry));
   };
 
   const renderBody = (entry: HistoryItem) => {
@@ -106,13 +120,30 @@ export function HistoryPage() {
 
   return (
     <>
-      <PageHeader title={t.title} subtitle={t.subtitle} />
+      <PageHeader
+        title={t.title}
+        subtitle={showingDeleted ? t.deletedSubtitle : t.subtitle}
+        actions={
+          isAdmin &&
+          (showingDeleted || deletedCount > 0) && (
+            <button
+              type="button"
+              className={buttonClass('ghost', 'text-sm')}
+              onClick={() => setViewDeleted(!viewDeleted)}
+            >
+              {showingDeleted ? t.showActive : t.showDeleted(deletedCount)}
+            </button>
+          )
+        }
+      />
       {error && (
         <div className="mb-3">
           <ErrorText>{error}</ErrorText>
         </div>
       )}
-      {items.length === 0 ? (
+      {items.length === 0 && showingDeleted ? (
+        <p className="text-sm text-ink-muted">{t.deletedEmpty}</p>
+      ) : items.length === 0 ? (
         <EmptyState art={<HistoryArt />} title={t.emptyTitle} body={t.emptyBody} />
       ) : (
         <ul className="stagger space-y-2">
@@ -129,6 +160,17 @@ export function HistoryPage() {
                 <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-ink-muted">
                   {kindLabel[entry.kind]}
                   {deleted && <Badge>{az.common.deleted}</Badge>}
+                  {isAdmin && !deleted && (
+                    <button
+                      type="button"
+                      className={buttonClass('danger', 'ml-auto min-h-9 px-2.5')}
+                      onClick={() => setEntryToDelete(entry)}
+                      aria-label={`${az.common.delete}: ${labelOf(entry)}`}
+                      title={az.common.delete}
+                    >
+                      <TrashIcon />
+                    </button>
+                  )}
                 </div>
                 <div className="flex items-start gap-3">
                   <div
@@ -140,68 +182,51 @@ export function HistoryPage() {
                     <span className="tabular shrink-0 font-semibold">{formatMoney(amount)}</span>
                   )}
                 </div>
-                {deleted ? (
+                {deleted && (
                   <div className="mt-2">
                     <button
                       type="button"
                       className={buttonClass('secondary', 'min-h-10 text-sm')}
-                      onClick={() => restore(entry)}
+                      onClick={() => run(() => restoreAction(entry))}
                     >
                       {az.common.restore}
                     </button>
                   </div>
-                ) : (
-                  entry.kind === 'settlement' && (
-                    <div className="mt-2">
-                      <button
-                        type="button"
-                        className={buttonClass('danger', 'min-h-10 px-3 text-sm')}
-                        onClick={() => setSettlementToDelete(entry.item)}
-                      >
-                        {az.common.delete}
-                      </button>
-                    </div>
-                  )
                 )}
               </>
             );
             return (
               <li key={`${entry.kind}-${entry.item.id}`}>
-                {entry.kind === 'settlement' && !deleted ? (
-                  <SwipeToDelete
-                    className="rounded-card shadow-card"
-                    label={az.common.delete}
-                    onDelete={() => swipeDeleteSettlement(entry.item)}
-                  >
-                    <div className="rounded-card bg-surface p-4 ring-1 ring-inset ring-line">
-                      {card}
-                    </div>
-                  </SwipeToDelete>
-                ) : (
-                  <div
-                    className={`rounded-card p-4 ring-1 ${
-                      deleted
-                        ? 'bg-surface-2 text-ink-muted ring-line'
-                        : 'bg-surface shadow-card ring-line'
-                    }`}
-                  >
-                    {card}
-                  </div>
-                )}
+                <div
+                  className={`rounded-card p-4 ring-1 ${
+                    deleted
+                      ? 'bg-surface-2 text-ink-muted ring-line'
+                      : 'bg-surface shadow-card ring-line'
+                  }`}
+                >
+                  {card}
+                </div>
               </li>
             );
           })}
         </ul>
       )}
       <ConfirmDialog
-        open={settlementToDelete !== null}
-        title={t.deleteSettlementTitle}
+        open={entryToDelete !== null}
+        title={
+          entryToDelete?.kind === 'settlement'
+            ? t.deleteSettlementTitle
+            : az.meetupDetail.deleteExpenseTitle
+        }
         confirmLabel={az.common.delete}
         destructive
-        onConfirm={deleteSettlement}
-        onCancel={() => setSettlementToDelete(null)}
+        onConfirm={confirmDelete}
+        onCancel={() => setEntryToDelete(null)}
       >
-        {t.deleteSettlementBody}
+        {entryToDelete &&
+          (entryToDelete.kind === 'settlement'
+            ? t.deleteSettlementBody
+            : az.meetupDetail.deleteExpenseBody(labelOf(entryToDelete)))}
       </ConfirmDialog>
     </>
   );

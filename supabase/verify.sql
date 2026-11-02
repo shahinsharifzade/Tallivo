@@ -107,3 +107,11 @@ select conname as constraint_name, pg_get_constraintdef(oid) as definition
 from pg_constraint
 where conrelid = 'public.member_cards'::regclass
 order by conname;
+
+-- 9. Who may soft-delete (after migration 004). Expected: 3 rows, and both qual and with_check of
+--    each mention is_group_admin().
+select tablename, cmd, qual, with_check
+from pg_policies
+where schemaname = 'public' and cmd = 'UPDATE'
+  and tablename in ('meetups', 'expenses', 'settlements')
+order by tablename;
