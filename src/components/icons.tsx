@@ -43,6 +43,23 @@ export const SettingsIcon = () => (
     <circle cx="18" cy="18" r="2" />
   </Icon>
 );
+export const UserIcon = () => (
+  <Icon>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+  </Icon>
+);
+export const EyeIcon = () => (
+  <Icon width="18" height="18">
+    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" />
+    <circle cx="12" cy="12" r="3" />
+  </Icon>
+);
+export const EyeOffIcon = () => (
+  <Icon width="18" height="18">
+    <path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.5 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10 10 0 0 0 4.6-1.1M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+  </Icon>
+);
 export const PlusIcon = () => (
   <Icon>
     <path d="M12 5v14M5 12h14" />

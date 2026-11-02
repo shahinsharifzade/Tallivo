@@ -12,6 +12,8 @@ export type Backend =
 export interface Account {
   memberId: Id;
   memberName: string;
+  /** From the auth session only. Shown on the Profile page; never stored or logged. */
+  email: string;
   signOut(): Promise<void>;
 }
 

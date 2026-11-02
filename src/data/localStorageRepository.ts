@@ -1,9 +1,10 @@
-import type { Expense, Id, IsoDateTime, Meetup, Member, Settlement } from '../domain';
-import { isMemberReferenced } from '../domain';
+import type { Expense, Id, IsoDateTime, Meetup, Member, MemberCard, Settlement } from '../domain';
+import { isCardNumberValid, isMemberReferenced, MAX_CARD_LABEL_LENGTH } from '../domain';
 import { nowIso } from '../lib/dates';
 import { newId } from '../lib/id';
 import { AppError } from './errors';
 import type {
+  CardInput,
   ExpenseInput,
   MeetupInput,
   MemberInput,
@@ -11,11 +12,18 @@ import type {
   SettlementInput,
   Snapshot,
 } from './repository';
-import { emptySnapshot, parseSnapshot } from './snapshot';
+import { emptySnapshot, parseStoredData } from './snapshot';
 
 export const STORAGE_KEY = 'tallivo:v1';
 
 type SoftDeletable = 'meetups' | 'expenses' | 'settlements';
+
+/** What is stored: a snapshot plus the cards, which never leave this key (no export). */
+type StoredData = Snapshot & { cards: MemberCard[] };
+
+function emptyData(): StoredData {
+  return { ...emptySnapshot(), cards: [] };
+}
 
 /** Minimal in-memory Storage used when localStorage is unavailable (e.g. blocked by the browser). */
 function memoryStorage(): Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> {
@@ -53,26 +61,26 @@ export class LocalStorageRepository implements Repository {
 
   // ---- storage plumbing ----
 
-  private read(): Snapshot {
+  private read(): StoredData {
     let raw: string | null;
     try {
       raw = this.storage.getItem(STORAGE_KEY);
     } catch (e) {
       console.error('[tallivo] Failed to read storage', e);
-      return emptySnapshot();
+      return emptyData();
     }
-    if (raw === null) return emptySnapshot();
+    if (raw === null) return emptyData();
 
     let reason: string;
     try {
-      const result = parseSnapshot(JSON.parse(raw));
-      if (result.ok) return result.snapshot;
+      const result = parseStoredData(JSON.parse(raw));
+      if (result.ok) return { ...result.snapshot, cards: result.cards };
       reason = result.reason;
     } catch (e) {
       reason = e instanceof Error ? e.message : String(e);
     }
     this.quarantine(raw, reason);
-    return emptySnapshot();
+    return emptyData();
   }
 
   /** Keeps a copy of unreadable data under a separate key, then starts fresh. */
@@ -92,7 +100,7 @@ export class LocalStorageRepository implements Repository {
     }
   }
 
-  private write(snapshot: Snapshot): void {
+  private write(snapshot: StoredData): void {
     try {
       this.storage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
     } catch (e) {
@@ -101,7 +109,7 @@ export class LocalStorageRepository implements Repository {
     }
   }
 
-  private mutate<T>(fn: (snapshot: Snapshot) => T): T {
+  private mutate<T>(fn: (snapshot: StoredData) => T): T {
     const snapshot = this.read();
     const result = fn(snapshot);
     this.write(snapshot);
@@ -144,6 +152,7 @@ export class LocalStorageRepository implements Repository {
       LocalStorageRepository.find(s.members, id);
       if (isMemberReferenced(id, s.expenses, s.settlements)) throw new AppError('memberInUse');
       s.members = s.members.filter((m) => m.id !== id);
+      s.cards = s.cards.filter((c) => c.memberId !== id);
     });
   }
 
@@ -252,14 +261,57 @@ export class LocalStorageRepository implements Repository {
     this.setDeletedAt('settlements', id, undefined);
   }
 
+  // ---- cards ----
+
+  async listCards(): Promise<MemberCard[]> {
+    return this.read().cards;
+  }
+
+  async saveCard(input: CardInput, id?: Id): Promise<MemberCard> {
+    const label = input.label?.trim() || undefined;
+    if (
+      !isCardNumberValid(input.cardNumber) ||
+      (label !== undefined && label.length > MAX_CARD_LABEL_LENGTH)
+    ) {
+      throw new AppError('invalidCard');
+    }
+    return this.mutate((s) => {
+      LocalStorageRepository.find(s.members, input.memberId);
+      const duplicate = s.cards.some(
+        (c) => c.id !== id && c.memberId === input.memberId && c.cardNumber === input.cardNumber,
+      );
+      if (duplicate) throw new AppError('cardDuplicate');
+      const now = nowIso();
+      if (id) {
+        const fields = { ...input, label, updatedAt: now };
+        return Object.assign(LocalStorageRepository.find(s.cards, id), fields);
+      }
+      const card: MemberCard = { id: newId(), ...input, label, createdAt: now, updatedAt: now };
+      s.cards.push(card);
+      return card;
+    });
+  }
+
+  async deleteCard(id: Id): Promise<void> {
+    this.mutate((s) => {
+      LocalStorageRepository.find(s.cards, id);
+      s.cards = s.cards.filter((c) => c.id !== id);
+    });
+  }
+
   // ---- whole dataset ----
 
   async exportSnapshot(): Promise<Snapshot> {
-    return this.read();
+    // Built field by field so the stored cards cannot end up in the export.
+    const { schemaVersion, members, meetups, expenses, settlements } = this.read();
+    return { schemaVersion, members, meetups, expenses, settlements };
   }
 
   async replaceAll(snapshot: Snapshot): Promise<void> {
-    this.write(snapshot);
+    // Backups have no cards, so restoring one keeps the cards of members that still exist.
+    const memberIds = new Set(snapshot.members.map((m) => m.id));
+    const cards = this.read().cards.filter((c) => memberIds.has(c.memberId));
+    this.write({ ...snapshot, cards });
   }
 
   async clearAll(): Promise<void> {

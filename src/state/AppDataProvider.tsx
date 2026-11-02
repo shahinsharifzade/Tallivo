@@ -1,18 +1,30 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { isAppError } from '../data/errors';
 import type { Repository } from '../data/repository';
 import { ensureSeeded } from '../data/seed';
 import { createActions } from './actions';
 import { AppDataContext, type AppData, type AppDataState } from './context';
 import { errorMessage } from './errorMessage';
 
+/** A server without migration 003 must not stop the rest of the app from loading. */
+async function loadCards(repository: Repository): Promise<Pick<AppData, 'cards' | 'cardsReady'>> {
+  try {
+    return { cards: await repository.listCards(), cardsReady: true };
+  } catch (e) {
+    if (isAppError(e) && e.code === 'serverOutdated') return { cards: [], cardsReady: false };
+    throw e;
+  }
+}
+
 async function loadAll(repository: Repository): Promise<AppData> {
-  const [members, meetups, expenses, settlements] = await Promise.all([
+  const [members, meetups, expenses, settlements, cards] = await Promise.all([
     repository.listMembers(),
     repository.listMeetups(),
     repository.listExpenses(),
     repository.listSettlements(),
+    loadCards(repository),
   ]);
-  return { members, meetups, expenses, settlements };
+  return { members, meetups, expenses, settlements, ...cards };
 }
 
 const initialState: AppDataState = {
@@ -23,6 +35,8 @@ const initialState: AppDataState = {
   meetups: [],
   expenses: [],
   settlements: [],
+  cards: [],
+  cardsReady: true,
 };
 
 /**

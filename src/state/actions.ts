@@ -10,10 +10,17 @@ import {
   type Id,
   type Meetup,
   type Member,
+  type MemberCard,
   type Settlement,
 } from '../domain';
 import { AppError } from '../data/errors';
-import type { ExpenseInput, MeetupInput, Repository, SettlementInput } from '../data/repository';
+import type {
+  CardInput,
+  ExpenseInput,
+  MeetupInput,
+  Repository,
+  SettlementInput,
+} from '../data/repository';
 import { seedDefaultMembers } from '../data/seed';
 import { parseSnapshotJson, serializeSnapshot } from '../data/snapshot';
 
@@ -43,6 +50,9 @@ export interface AppActions {
   createSettlement(input: SettlementInput): Promise<Settlement>;
   deleteSettlement(id: Id): Promise<void>;
   restoreSettlement(id: Id): Promise<void>;
+
+  saveCard(input: CardInput, id?: Id): Promise<MemberCard>;
+  deleteCard(id: Id): Promise<void>;
 
   exportJson(): Promise<string>;
   importJson(text: string): Promise<ImportSummary>;
@@ -189,6 +199,14 @@ export function createActions(repository: Repository, reload: () => Promise<void
 
     async restoreSettlement(id) {
       await after(repository.restoreSettlement(id));
+    },
+
+    async saveCard(input, id) {
+      return after(repository.saveCard(input, id));
+    },
+
+    async deleteCard(id) {
+      await after(repository.deleteCard(id));
     },
 
     async exportJson() {

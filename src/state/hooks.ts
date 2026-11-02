@@ -8,6 +8,7 @@ import {
   participantIds,
   simplifyDebts,
   sortMembers,
+  totalConsumedByMember,
   totalPaidByMember,
   totalSpent,
   type Expense,
@@ -16,6 +17,7 @@ import {
   type Settlement,
 } from '../domain';
 import type { AppActions } from './actions';
+import { useAccount, useBackend } from './backend';
 import { AppDataContext, type AppDataContextValue } from './context';
 
 function useAppDataContext(): AppDataContextValue {
@@ -59,6 +61,25 @@ export function useOverallSummary() {
 export function usePaidByMember() {
   const { members, expenses } = useAppData();
   return useMemo(() => totalPaidByMember(members, expenses), [members, expenses]);
+}
+
+/** memberId -> total consumed (sum of shares in non-deleted expenses). */
+export function useConsumedByMember() {
+  const { members, expenses } = useAppData();
+  return useMemo(() => totalConsumedByMember(members, expenses), [members, expenses]);
+}
+
+/**
+ * The signed-in member and what the UI should offer them. The database enforces the same rules;
+ * this only decides what to show. Local mode has no login, so its single user counts as admin.
+ */
+export function useCurrentMember(): { memberId: Id | null; isAdmin: boolean } {
+  const { members } = useAppData();
+  const account = useAccount();
+  const local = useBackend().mode === 'local';
+  if (local || !account) return { memberId: null, isAdmin: local };
+  const me = members.find((m) => m.id === account.memberId);
+  return { memberId: account.memberId, isAdmin: me?.isAdmin === true };
 }
 
 /** Balances, simplified debts and totals for one meetup (settlements are not included). */

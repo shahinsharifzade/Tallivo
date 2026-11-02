@@ -17,6 +17,8 @@ export interface Member {
   sortOrder: number;
   /** Display color ("#rrggbb"). Optional: older data has none and gets a default by sortOrder. */
   color?: string;
+  /** Shared mode only: may rename and add members. Local mode treats its single user as admin. */
+  isAdmin?: boolean;
   createdAt: IsoDateTime;
 }
 

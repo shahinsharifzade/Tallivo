@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { Expense, Meetup, Member, Settlement } from '../domain';
+import type { Expense, Meetup, Member, MemberCard, Settlement } from '../domain';
 import type { AppActions } from './actions';
 
 export interface AppData {
@@ -7,6 +7,9 @@ export interface AppData {
   meetups: Meetup[];
   expenses: Expense[];
   settlements: Settlement[];
+  cards: MemberCard[];
+  /** False while migration 003 has not been run on the server (shared mode). */
+  cardsReady: boolean;
 }
 
 export interface AppDataState extends AppData {

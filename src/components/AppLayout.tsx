@@ -5,13 +5,14 @@ import { useSettledTransition } from '../state/celebration';
 import { useAppData, useOverallSummary, useRetryLoad } from '../state/hooks';
 import { FeedbackProvider } from './FeedbackProvider';
 import { Logo } from './Logo';
-import { CalendarIcon, ClockIcon, HomeIcon, SettingsIcon } from './icons';
+import { CalendarIcon, ClockIcon, HomeIcon, SettingsIcon, UserIcon } from './icons';
 import { buttonClass } from './styles';
 
 const tabs: { to: string; label: string; icon: ReactNode; end?: boolean }[] = [
   { to: '/', label: az.nav.overview, icon: <HomeIcon />, end: true },
   { to: '/meetups', label: az.nav.meetups, icon: <CalendarIcon /> },
   { to: '/history', label: az.nav.history, icon: <ClockIcon /> },
+  { to: '/profile', label: az.nav.profile, icon: <UserIcon /> },
   { to: '/settings', label: az.nav.settings, icon: <SettingsIcon /> },
 ];
 
@@ -112,7 +113,7 @@ export function AppLayout() {
           aria-label={az.nav.label}
           className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
         >
-          <ul className="mx-auto grid max-w-2xl grid-cols-4">
+          <ul className="mx-auto grid max-w-2xl grid-cols-5">
             {tabs.map((tab) => (
               <li key={tab.to}>
                 <NavLink

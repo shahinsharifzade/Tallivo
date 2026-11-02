@@ -3,6 +3,10 @@ import { createContext, useContext } from 'react';
 export interface Feedback {
   /** Short "saved" checkmark toast (+ haptic tap where supported). */
   saved(): void;
+  /** Short "copied" checkmark toast (+ haptic tap where supported). */
+  copied(): void;
+  /** Short error toast. */
+  error(message: string): void;
   /** Toast with an Undo button, e.g. after a swipe-to-delete. */
   undoable(message: string, undo: () => Promise<void>): void;
 }

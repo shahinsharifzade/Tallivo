@@ -53,7 +53,7 @@ export function BalanceBars({ members, balances, onlyIds }: BalanceBarsProps) {
 }
 
 /** Wording and color follow the real value; only the displayed amount counts up. */
-function BalanceLabel({ value }: { value: number }) {
+export function BalanceLabel({ value }: { value: number }) {
   const shown = useCountUp(value);
   const amount = formatMoney(Math.abs(shown));
   const tone = value > 0 ? 'text-pos' : value < 0 ? 'text-neg' : 'text-ink-muted';

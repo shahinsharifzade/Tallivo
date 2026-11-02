@@ -106,9 +106,9 @@ export function AuthGate({
   const account = useMemo<Account | null>(
     () =>
       link?.status === 'linked'
-        ? { memberId: link.memberId, memberName: link.memberName, signOut }
+        ? { memberId: link.memberId, memberName: link.memberName, email, signOut }
         : null,
-    [link, signOut],
+    [link, email, signOut],
   );
 
   if (session === undefined || (session && !link)) {

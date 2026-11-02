@@ -8,9 +8,10 @@ import { PaidChart } from '../components/PaidChart';
 import { buttonClass } from '../components/styles';
 import { TransferCards } from '../components/TransferCards';
 import { Card, EmptyState, SectionTitle } from '../components/ui';
-import { formatMoney, formatMoneyPlain } from '../domain';
+import { formatMoney } from '../domain';
 import { az } from '../i18n/az';
 import { useCountUp } from '../lib/motion';
+import { paymentLink } from '../lib/paymentLink';
 import { useCelebration } from '../state/celebration';
 import { useAppData, useOverallSummary, usePaidByMember } from '../state/hooks';
 
@@ -90,9 +91,7 @@ export function OverviewPage() {
             transfers={transfers}
             members={members}
             emptyText={az.overview.allSettled}
-            linkFor={(t) =>
-              `/payments/new?from=${t.fromMemberId}&to=${t.toMemberId}&amount=${formatMoneyPlain(t.amountMinor)}`
-            }
+            linkFor={paymentLink}
           />
         </Card>
       )}

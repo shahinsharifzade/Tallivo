@@ -1,31 +1,39 @@
 import { useState, type FormEvent } from 'react';
 import { Avatar } from '../components/Avatar';
 import { BackupPanel } from '../components/BackupPanel';
+import { ColorSwatches } from '../components/ColorSwatches';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { TrashIcon } from '../components/icons';
 import { buttonClass, inputClass } from '../components/styles';
 import { Badge, Card, ErrorText, SectionTitle, PageHeader } from '../components/ui';
 import { MAX_NAME_LENGTH, validateMemberName, type Member } from '../domain';
 import { az } from '../i18n/az';
-import { MEMBER_PALETTE, memberColor } from '../lib/memberColors';
+import { memberColor } from '../lib/memberColors';
 import { setThemePreference, useThemePreference, type ThemePreference } from '../lib/theme';
-import { useAccount, useBackend } from '../state/backend';
-import { useActions, useAppData, useReferencedMemberIds } from '../state/hooks';
+import { useBackend } from '../state/backend';
+import { useActions, useAppData, useCurrentMember, useReferencedMemberIds } from '../state/hooks';
 import { useFeedback } from '../state/feedback';
 import { useSubmit } from '../state/useSubmit';
 
 const t = az.settings;
 
-/** Inline rename: saves on blur or Enter, reverts on Escape. */
+/**
+ * Inline rename (saves on blur or Enter, reverts on Escape) and color picker. What is offered here
+ * only reflects the rules; the database enforces them (migration 003).
+ */
 function MemberRow({
   member,
   members,
   inUse,
+  canRename,
+  canRecolor,
   onDelete,
 }: {
   member: Member;
   members: Member[];
   inUse: boolean;
+  canRename: boolean;
+  canRecolor: boolean;
   /** Absent when members cannot be deleted at all (shared mode). */
   onDelete?: () => void;
 }) {
@@ -48,35 +56,43 @@ function MemberRow({
   return (
     <li className="py-2">
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setPickingColor((v) => !v)}
-          aria-expanded={pickingColor}
-          aria-label={t.colorLabel(member.name)}
-          title={t.colorLabel(member.name)}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent active:scale-95"
-        >
+        {canRecolor ? (
+          <button
+            type="button"
+            onClick={() => setPickingColor((v) => !v)}
+            aria-expanded={pickingColor}
+            aria-label={t.colorLabel(member.name)}
+            title={t.colorLabel(member.name)}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent active:scale-95"
+          >
+            <Avatar member={member} size="lg" />
+          </button>
+        ) : (
           <Avatar member={member} size="lg" />
-        </button>
-        <input
-          className={inputClass}
-          value={name}
-          maxLength={MAX_NAME_LENGTH}
-          aria-label={t.renameLabel(member.name)}
-          aria-invalid={!!error}
-          onChange={(e) => {
-            setName(e.target.value);
-            setError(null);
-          }}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') e.currentTarget.blur();
-            if (e.key === 'Escape') {
-              setName(member.name);
+        )}
+        {canRename ? (
+          <input
+            className={inputClass}
+            value={name}
+            maxLength={MAX_NAME_LENGTH}
+            aria-label={t.renameLabel(member.name)}
+            aria-invalid={!!error}
+            onChange={(e) => {
+              setName(e.target.value);
               setError(null);
-            }
-          }}
-        />
+            }}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur();
+              if (e.key === 'Escape') {
+                setName(member.name);
+                setError(null);
+              }
+            }}
+          />
+        ) : (
+          <span className="min-w-0 flex-1 break-words font-medium">{member.name}</span>
+        )}
         {!onDelete ? null : inUse ? (
           <span className="shrink-0">
             <Badge>{t.memberInUse}</Badge>
@@ -94,34 +110,15 @@ function MemberRow({
         )}
       </div>
       {pickingColor && (
-        <div
-          role="radiogroup"
-          aria-label={t.colorLabel(member.name)}
-          className="mt-2 flex flex-wrap gap-1"
-        >
-          {MEMBER_PALETTE.map((color, i) => {
-            const checked = color.toLowerCase() === current.toLowerCase();
-            return (
-              <button
-                key={color}
-                type="button"
-                role="radio"
-                aria-checked={checked}
-                aria-label={t.colorNames[i]}
-                title={t.colorNames[i]}
-                onClick={() => {
-                  setPickingColor(false);
-                  if (!checked) void run(() => actions.setMemberColor(member.id, color));
-                }}
-                className="flex h-11 w-11 items-center justify-center rounded-full transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent active:scale-90"
-              >
-                <span
-                  style={{ backgroundColor: color }}
-                  className={`h-8 w-8 rounded-full ${checked ? 'ring-2 ring-ink ring-offset-2 ring-offset-surface' : ''}`}
-                />
-              </button>
-            );
-          })}
+        <div className="mt-2">
+          <ColorSwatches
+            label={t.colorLabel(member.name)}
+            current={current}
+            onPick={(color) => {
+              setPickingColor(false);
+              if (color !== current) void run(() => actions.setMemberColor(member.id, color));
+            }}
+          />
         </div>
       )}
       {error && <p className="mt-1 text-sm text-neg">{error}</p>}
@@ -129,36 +126,15 @@ function MemberRow({
   );
 }
 
-/** Storage mode badge, and in shared mode the signed-in member with a sign-out button. */
-function AccountCard({ shared }: { shared: boolean }) {
-  const account = useAccount();
-  const [signingOut, setSigningOut] = useState(false);
+/** Storage mode badge. The account itself (password, sign-out) lives on the Profile page. */
+function ModeCard({ shared }: { shared: boolean }) {
   return (
     <Card>
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-semibold text-ink">{t.accountTitle}</h2>
         <Badge>{shared ? t.modeShared : t.modeLocal}</Badge>
       </div>
-      {account ? (
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <p className="min-w-0 break-words text-sm text-ink-soft">
-            {t.signedInAs(account.memberName)}
-          </p>
-          <button
-            type="button"
-            className={buttonClass('secondary', 'shrink-0')}
-            disabled={signingOut}
-            onClick={async () => {
-              setSigningOut(true);
-              await account.signOut();
-            }}
-          >
-            {az.auth.signOut}
-          </button>
-        </div>
-      ) : (
-        <p className="mt-1 text-sm text-ink-muted">{t.modeLocalHint}</p>
-      )}
+      {!shared && <p className="mt-1 text-sm text-ink-muted">{t.modeLocalHint}</p>}
     </Card>
   );
 }
@@ -194,7 +170,8 @@ function ThemeCard() {
 }
 
 export function SettingsPage() {
-  const { members } = useAppData();
+  const { members, cardsReady } = useAppData();
+  const { memberId: myId, isAdmin } = useCurrentMember();
   const shared = useBackend().mode === 'supabase';
   const referenced = useReferencedMemberIds();
   const actions = useActions();
@@ -236,12 +213,15 @@ export function SettingsPage() {
       <PageHeader title={t.title} />
       {generalSubmit.error && <ErrorText>{generalSubmit.error}</ErrorText>}
 
-      <AccountCard shared={shared} />
+      <ModeCard shared={shared} />
 
       <Card>
-        <SectionTitle hint={shared ? t.membersHintShared : t.membersHint}>
+        <SectionTitle
+          hint={!shared ? t.membersHint : isAdmin ? t.membersHintShared : t.membersHintReadOnly}
+        >
           {t.membersTitle}
         </SectionTitle>
+        {!cardsReady && <p className="mb-2 text-sm text-neg">{az.errors.serverOutdated}</p>}
         <ul className="divide-y divide-line">
           {members.map((m) => (
             <MemberRow
@@ -250,31 +230,35 @@ export function SettingsPage() {
               member={m}
               members={members}
               inUse={referenced.has(m.id)}
+              canRename={isAdmin}
+              canRecolor={isAdmin || m.id === myId}
               onDelete={shared ? undefined : () => setMemberToDelete(m)}
             />
           ))}
         </ul>
-        <form onSubmit={addMember} className="mt-3 flex gap-2" noValidate>
-          <input
-            className={inputClass}
-            value={newName}
-            maxLength={MAX_NAME_LENGTH}
-            placeholder={t.newMemberPlaceholder}
-            aria-label={t.newMemberLabel}
-            aria-invalid={!!addSubmit.error}
-            onChange={(e) => {
-              setNewName(e.target.value);
-              addSubmit.setError(null);
-            }}
-          />
-          <button
-            type="submit"
-            className={buttonClass('primary', 'shrink-0')}
-            disabled={addSubmit.pending}
-          >
-            {t.addMember}
-          </button>
-        </form>
+        {isAdmin && (
+          <form onSubmit={addMember} className="mt-3 flex gap-2" noValidate>
+            <input
+              className={inputClass}
+              value={newName}
+              maxLength={MAX_NAME_LENGTH}
+              placeholder={t.newMemberPlaceholder}
+              aria-label={t.newMemberLabel}
+              aria-invalid={!!addSubmit.error}
+              onChange={(e) => {
+                setNewName(e.target.value);
+                addSubmit.setError(null);
+              }}
+            />
+            <button
+              type="submit"
+              className={buttonClass('primary', 'shrink-0')}
+              disabled={addSubmit.pending}
+            >
+              {t.addMember}
+            </button>
+          </form>
+        )}
         {addSubmit.error && <p className="mt-1 text-sm text-neg">{addSubmit.error}</p>}
       </Card>
 

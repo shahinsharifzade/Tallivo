@@ -125,7 +125,8 @@ export function FieldGroup({
   children: ReactNode;
 }) {
   return (
-    <fieldset>
+    // min-w-0: a fieldset otherwise grows to fit wide content such as a scrolling card row.
+    <fieldset className="min-w-0">
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <legend className="text-sm font-medium text-ink-soft">{legend}</legend>
         {aside}

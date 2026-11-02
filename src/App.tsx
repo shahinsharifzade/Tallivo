@@ -9,6 +9,7 @@ import { MeetupsPage } from './pages/MeetupsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { PaymentFormPage } from './pages/PaymentFormPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
 
 // Dev-only: the debug page is not registered (and not bundled) in production builds.
@@ -33,6 +34,7 @@ export function App() {
             />
             <Route path="payments/new" element={<PaymentFormPage />} />
             <Route path="history" element={<HistoryPage />} />
+            <Route path="profile" element={<ProfilePage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>

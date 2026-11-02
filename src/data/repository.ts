@@ -1,4 +1,4 @@
-import type { Expense, Id, IsoDateTime, Meetup, Member, Settlement } from '../domain';
+import type { Expense, Id, IsoDateTime, Meetup, Member, MemberCard, Settlement } from '../domain';
 
 /** Fields the caller provides on create; the repository assigns id and timestamps. */
 export type MemberInput = Pick<Member, 'name' | 'sortOrder' | 'color'>;
@@ -12,9 +12,14 @@ export type SettlementInput = Pick<
   'fromMemberId' | 'toMemberId' | 'amountMinor' | 'date' | 'note'
 >;
 
-export const CURRENT_SCHEMA_VERSION = 1;
+export type CardInput = Pick<MemberCard, 'memberId' | 'label' | 'cardNumber'>;
 
-/** A full copy of all data. Used for export/import and as the localStorage payload. */
+export const CURRENT_SCHEMA_VERSION = 2;
+
+/**
+ * A full copy of all data except payment cards. Used for export/import. Cards are left out on
+ * purpose so that card numbers never end up in a backup file.
+ */
 export interface Snapshot {
   schemaVersion: number;
   members: Member[];
@@ -68,9 +73,14 @@ export interface Repository {
   softDeleteSettlement(id: Id, deletedAt?: IsoDateTime): Promise<void>;
   restoreSettlement(id: Id): Promise<void>;
 
-  /** Returns a full copy of all data. */
+  listCards(): Promise<MemberCard[]>;
+  /** Creates a card, or updates the card with this id. Rejects with invalidCard, cardDuplicate. */
+  saveCard(input: CardInput, id?: Id): Promise<MemberCard>;
+  deleteCard(id: Id): Promise<void>;
+
+  /** Returns a full copy of all data, without cards. */
   exportSnapshot(): Promise<Snapshot>;
-  /** Replaces ALL data with the given (already validated) snapshot. */
+  /** Replaces all data in the snapshot. Cards stay, as long as their member still exists. */
   replaceAll(snapshot: Snapshot): Promise<void>;
   /** Deletes all data. */
   clearAll(): Promise<void>;

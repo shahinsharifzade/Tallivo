@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DateField } from '../components/DateField';
 import { MemberChips } from '../components/MemberChips';
 import { MoneyInput } from '../components/MoneyInput';
+import { PaymentCard } from '../components/PaymentCard';
 import { buttonClass, inputClass } from '../components/styles';
 import { Card, ErrorText, Field, FieldGroup, PageHeader } from '../components/ui';
 import { isIsoDate, parseMoney, type Id } from '../domain';
@@ -22,7 +23,7 @@ const t = az.paymentForm;
  */
 export function PaymentFormPage() {
   const [params] = useSearchParams();
-  const { members } = useAppData();
+  const { members, cards, cardsReady } = useAppData();
   const account = useAccount();
   const actions = useActions();
   const navigate = useNavigate();
@@ -44,6 +45,9 @@ export function PaymentFormPage() {
   const [date, setDate] = useState(todayIso);
   const [note, setNote] = useState('');
   const [submitted, setSubmitted] = useState(false);
+
+  const recipient = members.find((m) => m.id === to);
+  const recipientCards = cards.filter((c) => c.memberId === to);
 
   const parsed = parseMoney(amount);
   const amountError = parsed.ok ? null : moneyErrorMessage(parsed.error);
@@ -84,6 +88,25 @@ export function PaymentFormPage() {
           </FieldGroup>
           <FieldGroup legend={t.to} error={submitted || sameMember ? toError : null}>
             <MemberChips members={members} selected={new Set(to ? [to] : [])} onToggle={setTo} />
+            {recipient && cardsReady && (
+              <div className="mt-3">
+                {recipientCards.length === 0 ? (
+                  <p className="text-sm text-ink-muted">{t.noCards(recipient.name)}</p>
+                ) : (
+                  <>
+                    <p className="text-sm text-ink-muted">{t.cardsHint}</p>
+                    {/* Bleeds to the card's edges so a partly visible card hints at scrolling. */}
+                    <ul className="-mx-4 mt-2 flex snap-x gap-3 overflow-x-auto px-4 pb-2">
+                      {recipientCards.map((card) => (
+                        <li key={card.id} className="w-64 shrink-0 snap-start">
+                          <PaymentCard card={card} member={recipient} className="w-full" />
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            )}
           </FieldGroup>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field

@@ -87,3 +87,37 @@ export function HistoryArt() {
     </svg>
   );
 }
+
+/** Two payment cards: no cards added yet. */
+export function CardsArt() {
+  return (
+    <svg {...svgProps}>
+      <ellipse cx="56" cy="76" rx="40" ry="5" className="fill-surface-3" />
+      <rect
+        x="30"
+        y="12"
+        width="60"
+        height="38"
+        rx="7"
+        className="fill-surface-3"
+        transform="rotate(8 60 31)"
+      />
+      <rect
+        x="22"
+        y="24"
+        width="64"
+        height="42"
+        rx="7"
+        className="fill-accent-soft stroke-accent"
+        strokeWidth="2.5"
+      />
+      <rect x="31" y="33" width="13" height="10" rx="2.5" className="fill-accent" />
+      <path
+        d="M31 56h20M57 56h19"
+        className="stroke-accent"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}

@@ -5,7 +5,7 @@ import { FeedbackContext, type Feedback } from '../state/feedback';
 import { CheckIcon } from './icons';
 
 type Toast =
-  | { id: number; kind: 'saved' }
+  | { id: number; kind: 'saved' | 'copied' }
   | { id: number; kind: 'undo'; message: string; undo: () => Promise<void> }
   | { id: number; kind: 'error'; message: string };
 
@@ -30,7 +30,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     if (!toast) return;
     const timer = window.setTimeout(
       () => setToast((t) => (t?.id === toast.id ? null : t)),
-      toast.kind === 'saved' ? SAVED_MS : UNDO_MS,
+      toast.kind === 'saved' || toast.kind === 'copied' ? SAVED_MS : UNDO_MS,
     );
     return () => window.clearTimeout(timer);
   }, [toast]);
@@ -40,11 +40,23 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     setToast({ id: nextId.current++, kind: 'saved' });
   }, []);
 
+  const copied = useCallback(() => {
+    vibrate();
+    setToast({ id: nextId.current++, kind: 'copied' });
+  }, []);
+
+  const error = useCallback((message: string) => {
+    setToast({ id: nextId.current++, kind: 'error', message });
+  }, []);
+
   const undoable = useCallback((message: string, undo: () => Promise<void>) => {
     setToast({ id: nextId.current++, kind: 'undo', message, undo });
   }, []);
 
-  const value = useMemo<Feedback>(() => ({ saved, undoable }), [saved, undoable]);
+  const value = useMemo<Feedback>(
+    () => ({ saved, copied, error, undoable }),
+    [saved, copied, error, undoable],
+  );
 
   const runUndo = async (undo: () => Promise<void>) => {
     setToast(null);
@@ -68,12 +80,12 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
             role="status"
             className="toast-in pointer-events-auto flex min-h-12 max-w-md items-center gap-3 rounded-full bg-ink py-2 pl-3 pr-2 text-sm font-medium text-bg shadow-raised"
           >
-            {toast.kind === 'saved' && (
+            {(toast.kind === 'saved' || toast.kind === 'copied') && (
               <>
                 <span className="check-pop flex h-7 w-7 items-center justify-center rounded-full bg-pos-bar text-white">
                   <CheckIcon />
                 </span>
-                <span className="pr-3">{az.feedback.saved}</span>
+                <span className="pr-3">{az.feedback[toast.kind]}</span>
               </>
             )}
             {toast.kind === 'undo' && (

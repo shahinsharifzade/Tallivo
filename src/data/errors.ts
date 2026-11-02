@@ -12,7 +12,10 @@ export type AppErrorCode =
   | 'notAllowed'
   | 'unsupported'
   | 'badServerData'
-  | 'serverOutdated';
+  | 'serverOutdated'
+  | 'adminOnly'
+  | 'invalidCard'
+  | 'cardDuplicate';
 
 /** Error with a stable code that the UI maps to a localized message. */
 export class AppError extends Error {

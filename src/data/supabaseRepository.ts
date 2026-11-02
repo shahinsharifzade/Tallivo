@@ -1,9 +1,19 @@
 import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
-import type { Expense, ExpenseShare, Id, IsoDateTime, Meetup, Member, Settlement } from '../domain';
+import type {
+  Expense,
+  ExpenseShare,
+  Id,
+  IsoDateTime,
+  Meetup,
+  Member,
+  MemberCard,
+  Settlement,
+} from '../domain';
 import { nowIso } from '../lib/dates';
 import { AppError, type AppErrorCode } from './errors';
 import {
   CURRENT_SCHEMA_VERSION,
+  type CardInput,
   type ExpenseInput,
   type MeetupInput,
   type MemberInput,
@@ -19,7 +29,18 @@ interface MemberRow {
   name: string;
   color: string | null;
   sort_order: number;
+  /** Absent until migration_003_admin_and_cards.sql has been run. */
+  is_admin?: boolean;
   created_at: string;
+}
+
+interface CardRow {
+  id: string;
+  member_id: string;
+  label: string | null;
+  card_number: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface MeetupRow {
@@ -60,7 +81,9 @@ interface SettlementRow {
   deleted_at: string | null;
 }
 
-const MEMBER_COLUMNS = 'id, name, color, sort_order, created_at';
+// "*" because naming is_admin would fail every member query until migration 003 has been run.
+const MEMBER_COLUMNS = '*';
+const CARD_COLUMNS = 'id, member_id, label, card_number, created_at, updated_at';
 const MEETUP_COLUMNS = 'id, title, date, note, created_at, deleted_at';
 const EXPENSE_COLUMNS =
   'id, meetup_id, title, total_minor, paid_by_member_id, note, created_at, updated_at, deleted_at, expense_shares (member_id, amount_minor)';
@@ -96,7 +119,19 @@ function toMember(r: MemberRow): Member {
     name: r.name,
     sortOrder: r.sort_order,
     color: r.color ?? undefined,
+    isAdmin: r.is_admin === true ? true : undefined,
     createdAt: iso(r.created_at),
+  };
+}
+
+function toCard(r: CardRow): MemberCard {
+  return {
+    id: r.id,
+    memberId: r.member_id,
+    label: r.label ?? undefined,
+    cardNumber: r.card_number,
+    createdAt: iso(r.created_at),
+    updatedAt: iso(r.updated_at),
   };
 }
 
@@ -160,7 +195,11 @@ const RPC_ERRORS: Record<string, AppErrorCode> = {
   payer_not_found: 'notFound',
   share_member_not_found: 'notFound',
   expense_not_found: 'notFound',
+  admin_only: 'adminOnly',
 };
+
+/** Missing table or column: a migration file has not been run in the SQL Editor yet. */
+const NOT_MIGRATED_CODES = new Set(['42P01', '42703', 'PGRST204', 'PGRST205']);
 
 /** Maps a PostgREST error to an AppError the UI can show in Azerbaijani. */
 function toAppError(error: PostgrestError, status: number, fallback: AppErrorCode): AppError {
@@ -173,7 +212,9 @@ function toAppError(error: PostgrestError, status: number, fallback: AppErrorCod
   }
   if (code === 'PGRST116' || code === '23503') return new AppError('notFound', detail);
   // The RPC does not exist yet: a migration file has not been run in the SQL Editor.
-  if (code === 'PGRST202') return new AppError('serverOutdated', detail);
+  if (code === 'PGRST202' || NOT_MIGRATED_CODES.has(code)) {
+    return new AppError('serverOutdated', detail);
+  }
   if (code === '23505') return new AppError('invalidMemberName', detail);
   if (code === 'P0001') {
     const prefix = error.message.split(':', 1)[0] ?? '';
@@ -252,6 +293,8 @@ export class SupabaseRepository implements Repository {
       .insert({ name: input.name, sort_order: input.sortOrder, color: input.color ?? null })
       .select(MEMBER_COLUMNS)
       .single();
+    // Only admins pass the insert policy. Updates say so themselves, via the members_guard trigger.
+    if (res.error?.code === '42501') throw new AppError('adminOnly', res.error.message);
     return toMember(unwrap<MemberRow>(res, 'invalidMemberName'));
   }
 
@@ -417,6 +460,34 @@ export class SupabaseRepository implements Repository {
 
   async restoreSettlement(id: Id): Promise<void> {
     await this.setDeletedAt('settlements', id, null);
+  }
+
+  // ---- cards (Row Level Security lets each person change only their own) ----
+
+  async listCards(): Promise<MemberCard[]> {
+    const res = await this.client.from('member_cards').select(CARD_COLUMNS).order('created_at');
+    return unwrap<CardRow[]>(res, 'notAllowed').map(toCard);
+  }
+
+  async saveCard(input: CardInput, id?: Id): Promise<MemberCard> {
+    const row = {
+      member_id: input.memberId,
+      label: input.label?.trim() || null,
+      card_number: input.cardNumber,
+    };
+    const table = this.client.from('member_cards');
+    const res = await (id ? table.update(row).eq('id', id) : table.insert(row))
+      .select(CARD_COLUMNS)
+      .single();
+    // error.details would contain the number, so only the code is used here.
+    if (res.error?.code === '23505') throw new AppError('cardDuplicate');
+    if (res.error?.code === '23514') throw new AppError('invalidCard');
+    return toCard(unwrap<CardRow>(res, 'invalidCard'));
+  }
+
+  async deleteCard(id: Id): Promise<void> {
+    const res = await this.client.from('member_cards').delete().eq('id', id).select('id');
+    if (unwrap(res, 'notFound').length === 0) throw new AppError('notFound', id);
   }
 
   // ---- whole dataset ----

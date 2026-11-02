@@ -74,7 +74,8 @@ the older policy that lets any group member add members. The admin flag itself i
   with
   an `update public.members set user_id = ...` line as in `link_users.sql`. Only the SQL Editor
   can link accounts; the app cannot change `user_id`.
-- Forgotten password: there is no reset in the app. In **Authentication → Users**, open the user
+- Forgotten password: there is no reset in the app (a signed-in person can change theirs under
+  **Profil → Parolu dəyiş**). In **Authentication → Users**, open the user
   and set a new password (or send a recovery email).
 - Removing someone's access: set their member's `user_id` to `null` in SQL, or delete the user in
   **Authentication → Users** (the member row and their expenses stay).

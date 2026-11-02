@@ -51,9 +51,33 @@ The mode is chosen at startup from two environment variables (see `.env.example`
 - **Either missing → local mode.** For local mode while `.env` exists, override them:
   `VITE_SUPABASE_URL= npm run dev`.
 
-**Ayarlar** shows the current mode as a badge. In shared mode it also shows who is signed in
-and a sign-out button. Members can be renamed, recolored and added but not deleted, there is no
-"delete everything", and JSON import is hidden (export still works).
+**Ayarlar** shows the current mode as a badge. In shared mode members cannot be deleted, there is
+no "delete everything", and JSON import is hidden (export still works). Only the admin can rename
+and add members; everyone else sees names read-only and can change only their own color. The admin
+is a flag on the member row (`members.is_admin`) that only the SQL Editor can change, and the
+database enforces these rules too. Local mode has no login, so its single user counts as admin.
+
+## Profile page
+
+**Profil** is one person's own page, from top to bottom:
+
+- Avatar, name, an "Admin" badge when it applies, and in shared mode the signed-in email.
+- Their balance, total paid and total consumed, plus "Mənim borclarım": only the suggested
+  payments that involve them. Tapping one opens the payment form prefilled.
+- "Mənim kartlarım": their payment cards, masked with a show/hide toggle, with add, edit and
+  delete. Tapping a card copies the digits.
+- "Rəngim": their own color.
+- "Parolu dəyiş" and "Çıxış" (shared mode only).
+
+Local mode has no login, so a member selector at the top picks whose profile to show, and the
+email, password and sign-out parts are hidden.
+
+**Payment cards** store only a card number and an optional label, never CVV, expiry date or PIN.
+Each person manages only their own cards (not even an admin can change someone else's), and all
+group members can read them so they can copy the recipient's number in the payment form. Masking
+is only a display choice: anyone in the group can see the stored numbers. Cards are excluded from
+**JSON ixrac et**, and restoring a backup in local mode keeps the existing cards of members that
+still exist.
 
 Never put any other Supabase key (secret / `service_role`) in `.env`, the host, or the code:
 everything in a `VITE_` variable ends up in the public JavaScript bundle. Access control is
@@ -119,7 +143,8 @@ src/
 │  ├─ validation.ts   validateExpense, validateSettlement, validateMemberName, ...
 │  ├─ balances.ts     computeBalances, computeBalancesForMeetup
 │  ├─ simplify.ts     simplifyDebts (greedy), applyTransfers
-│  └─ selectors.ts    totals per group / member, participants
+│  ├─ selectors.ts    totals per group / member, participants
+│  └─ cards.ts        MemberCard, card number checks and formatting
 ├─ data/            Persistence
 │  ├─ repository.ts   Repository interface + Snapshot type (the DB seam)
 │  ├─ localStorageRepository.ts   Local mode (key "tallivo:v1")
@@ -131,7 +156,7 @@ src/
 ├─ components/      Shared UI (layout, tab bar, chips, lists, dialog, inputs), AuthGate,
 │                   DataRoot (local vs. signed-in Supabase)
 ├─ pages/           Screens (Overview, Meetups, MeetupDetail, ExpenseForm, Payment,
-│                   History, Settings, Login) and the dev-only /debug page
+│                   History, Profile, Settings, Login) and the dev-only /debug page
 ├─ i18n/az.ts       All user-facing text (Azerbaijani)
 └─ lib/             Small helpers (ids, dates, formatting, file download)
 supabase/           SQL to run in the Supabase SQL Editor (schema, migrations, checks)
@@ -204,23 +229,24 @@ Add the three meetups. For each one: **Görüşlər → Yeni görüş**, type th
 then **Xərc əlavə et** and fill in the expense:
 
 1. **Garden**
-   - Nə üçün: `Garden`, Ümumi məbləğ: `30`
+   - Nə üçün: `Garden`, Ümumi məbləğ: leave empty
    - Kim ödədi: **Ayxan**
    - Kimlər iştirak etdi: tap **Əşrəf** to deselect it (Ayxan, Şahin, Seyid stay selected)
-   - Bölgü: **Fərdi məbləğlər**. Ayxan `10`, Şahin `10`, Seyid `10`
+   - Bölgü: **Fərdi məbləğlər**. Ayxan `10`, Şahin `10`, Seyid `10`. The total must read 30.00 ₼.
    - **Yadda saxla**
 2. **PlayStation**
-   - Nə üçün: `PlayStation`, Ümumi məbləğ: `20`
+   - Nə üçün: `PlayStation`, Ümumi məbləğ: leave empty
    - Kim ödədi: **Şahin**
    - Kimlər iştirak etdi: deselect **Seyid**
-   - Bölgü: **Fərdi məbləğlər**. Əşrəf `6.66`, Ayxan `6.67`, Şahin `6.67`
+   - Bölgü: **Fərdi məbləğlər**. Əşrəf `6.66`, Ayxan `6.67`, Şahin `6.67`. The total must read
+     20.00 ₼.
    - **Yadda saxla**
 3. **Coffee**
-   - Nə üçün: `Coffee`, Ümumi məbləğ: `30`
+   - Nə üçün: `Coffee`, Ümumi məbləğ: leave empty
    - Kim ödədi: **Şahin**
    - Kimlər iştirak etdi: deselect **Seyid**
    - Bölgü: **Fərdi məbləğlər**. Əşrəf `11`, Ayxan `12`, Şahin `7`
-   - The indicator must read "Bölünüb: 30.00 ₼ / 30.00 ₼" before **Yadda saxla** becomes active.
+   - The total must read 30.00 ₼. In this mode it is always the sum of the amounts.
 
 (Explicit shares are used so the numbers do not depend on who receives a leftover qəpik.)
 

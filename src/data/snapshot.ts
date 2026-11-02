@@ -1,12 +1,15 @@
 // Validation and migration of untrusted snapshot data (imported files, stored payloads).
 import {
+  isCardNumberValid,
   isIsoDate,
+  MAX_CARD_LABEL_LENGTH,
   validateExpense,
   validateSettlement,
   type Expense,
   type ExpenseShare,
   type Meetup,
   type Member,
+  type MemberCard,
   type Settlement,
 } from '../domain';
 import { CURRENT_SCHEMA_VERSION, type Snapshot } from './repository';
@@ -75,10 +78,13 @@ function date(o: Obj, key: string, where: string): string {
   return v;
 }
 
-/** Migrates older payloads to the current schema. Only v1 exists so far. */
+/**
+ * Migrates older payloads to the current schema.
+ * v1 -> v2: localStorage gained optional cards; everything else is unchanged.
+ */
 function migrate(root: Obj): Obj {
   const version = root.schemaVersion;
-  if (version === CURRENT_SCHEMA_VERSION) return root;
+  if (version === 1 || version === CURRENT_SCHEMA_VERSION) return root;
   return fail(`unsupported schemaVersion ${String(version)}`);
 }
 
@@ -196,6 +202,45 @@ export function parseSnapshot(value: unknown): SnapshotParseResult {
     });
 
     return { ok: true, snapshot };
+  } catch (e) {
+    if (e instanceof InvalidSnapshot) return { ok: false, reason: e.message };
+    throw e;
+  }
+}
+
+/** Reason texts never contain the card number: they can end up in the console. */
+function parseCard(value: unknown, i: number, memberIds: ReadonlySet<string>): MemberCard {
+  const w = `cards[${i}]`;
+  const o = obj(value, w);
+  const cardNumber = str(o, 'cardNumber', w);
+  const label = optStr(o, 'label', w);
+  const memberId = str(o, 'memberId', w);
+  if (!isCardNumberValid(cardNumber)) fail(`${w}.cardNumber: expected 13-19 digits`);
+  if (label !== undefined && label.length > MAX_CARD_LABEL_LENGTH) fail(`${w}.label: too long`);
+  if (!memberIds.has(memberId)) fail(`${w}: unknown member`);
+  return {
+    id: str(o, 'id', w),
+    memberId,
+    label,
+    cardNumber,
+    createdAt: str(o, 'createdAt', w),
+    updatedAt: str(o, 'updatedAt', w),
+  };
+}
+
+export type StoredDataParseResult =
+  { ok: true; snapshot: Snapshot; cards: MemberCard[] } | { ok: false; reason: string };
+
+/** Validates the localStorage payload: a snapshot plus cards (absent in data saved before v2). */
+export function parseStoredData(value: unknown): StoredDataParseResult {
+  const result = parseSnapshot(value);
+  if (!result.ok) return result;
+  try {
+    const memberIds = new Set(result.snapshot.members.map((m) => m.id));
+    const rawCards = (value as Obj).cards ?? [];
+    const cards = arr(rawCards, 'cards').map((c, i) => parseCard(c, i, memberIds));
+    assertUniqueIds(cards, 'cards');
+    return { ok: true, snapshot: result.snapshot, cards };
   } catch (e) {
     if (e instanceof InvalidSnapshot) return { ok: false, reason: e.message };
     throw e;
