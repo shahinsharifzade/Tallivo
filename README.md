@@ -62,15 +62,15 @@ database enforces these rules too. Local mode has no login, so its single user c
 **Profil** is one person's own page, from top to bottom:
 
 - Avatar, name, an "Admin" badge when it applies, and in shared mode the signed-in email.
-- Their balance, total paid and total consumed, plus "Mənim borclarım": only the suggested
+- Their balance, plus "Mənim borclarım": only the suggested
   payments that involve them. Tapping one opens the payment form prefilled.
 - "Mənim kartlarım": their payment cards, masked with a show/hide toggle, with add, edit and
   delete. Tapping a card copies the digits.
 - "Rəngim": their own color.
-- "Parolu dəyiş" and "Çıxış" (shared mode only).
+- "Çıxış" (shared mode only).
 
 Local mode has no login, so a member selector at the top picks whose profile to show, and the
-email, password and sign-out parts are hidden.
+email and sign-out parts are hidden.
 
 **Payment cards** store only a card number and an optional label, never CVV, expiry date or PIN.
 Each person manages only their own cards (not even an admin can change someone else's), and all

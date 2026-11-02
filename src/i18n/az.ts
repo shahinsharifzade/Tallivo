@@ -205,8 +205,6 @@ export const az = {
     localHint: 'Bu rejimdə giriş yoxdur: kart və hesablamalara baxmaq üçün üzv seçin.',
     noMember: 'Üzv tapılmadı.',
     balance: 'Mənim balansım',
-    totalPaid: 'Ödədiyim',
-    totalConsumed: 'İstifadə etdiyim',
     debtsTitle: 'Mənim borclarım',
     noDebts: 'Sənin heç kimlə borcun yoxdur.',
     cardsTitle: 'Mənim kartlarım',

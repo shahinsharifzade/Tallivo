@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { BalanceLabel } from '../components/BalanceBars';
 import { CardForm } from '../components/CardForm';
-import { ChangePasswordCard } from '../components/ChangePasswordCard';
 import { ColorSwatches } from '../components/ColorSwatches';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { CardsArt } from '../components/illustrations';
@@ -12,20 +11,12 @@ import { PaymentCard } from '../components/PaymentCard';
 import { buttonClass } from '../components/styles';
 import { TransferCards } from '../components/TransferCards';
 import { Badge, Card, EmptyState, ErrorText, PageHeader, SectionTitle } from '../components/ui';
-import { formatMoney, maskCardNumber, type Id, type Member, type MemberCard } from '../domain';
+import { maskCardNumber, type Id, type Member, type MemberCard } from '../domain';
 import { az } from '../i18n/az';
 import { memberColor } from '../lib/memberColors';
-import { useCountUp } from '../lib/motion';
 import { paymentLink } from '../lib/paymentLink';
 import { useAccount, useBackend } from '../state/backend';
-import {
-  useActions,
-  useAppData,
-  useConsumedByMember,
-  useCurrentMember,
-  useOverallSummary,
-  usePaidByMember,
-} from '../state/hooks';
+import { useActions, useAppData, useCurrentMember, useOverallSummary } from '../state/hooks';
 import { useSubmit } from '../state/useSubmit';
 
 const t = az.profile;
@@ -90,8 +81,6 @@ function MemberProfile({ member }: { member: Member }) {
 function Summary({ member }: { member: Member }) {
   const { members } = useAppData();
   const { balances, transfers } = useOverallSummary();
-  const paid = usePaidByMember();
-  const consumed = useConsumedByMember();
   const mine = transfers.filter((x) => x.fromMemberId === member.id || x.toMemberId === member.id);
   return (
     <>
@@ -100,10 +89,6 @@ function Summary({ member }: { member: Member }) {
         <p className="mt-1 text-xl">
           <BalanceLabel value={balances[member.id] ?? 0} />
         </p>
-        <div className="mt-3 grid grid-cols-2 gap-3 border-t border-line pt-3">
-          <Stat label={t.totalPaid} value={paid[member.id] ?? 0} />
-          <Stat label={t.totalConsumed} value={consumed[member.id] ?? 0} />
-        </div>
       </Card>
       <Card>
         <SectionTitle hint={mine.length > 0 ? az.overview.transfersHint : undefined}>
@@ -117,16 +102,6 @@ function Summary({ member }: { member: Member }) {
         />
       </Card>
     </>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  const shown = useCountUp(value);
-  return (
-    <div className="min-w-0">
-      <p className="text-sm text-ink-muted">{label}</p>
-      <p className="tabular mt-0.5 text-lg font-bold">{formatMoney(shown)}</p>
-    </div>
   );
 }
 
@@ -265,26 +240,23 @@ function ColorSection({ member }: { member: Member }) {
   );
 }
 
-/** Password and sign-out. Local mode has no account, so nothing is shown there. */
+/** Sign-out. Local mode has no account, so nothing is shown there. */
 function AccountSection() {
   const backend = useBackend();
   const account = useAccount();
   const [signingOut, setSigningOut] = useState(false);
   if (backend.mode !== 'supabase' || !account) return null;
   return (
-    <>
-      <ChangePasswordCard client={backend.client} />
-      <button
-        type="button"
-        className={buttonClass('secondary', 'w-full')}
-        disabled={signingOut}
-        onClick={async () => {
-          setSigningOut(true);
-          await account.signOut();
-        }}
-      >
-        {az.auth.signOut}
-      </button>
-    </>
+    <button
+      type="button"
+      className={buttonClass('secondary', 'w-full')}
+      disabled={signingOut}
+      onClick={async () => {
+        setSigningOut(true);
+        await account.signOut();
+      }}
+    >
+      {az.auth.signOut}
+    </button>
   );
 }

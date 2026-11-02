@@ -8,7 +8,6 @@ import {
   participantIds,
   simplifyDebts,
   sortMembers,
-  totalConsumedByMember,
   totalPaidByMember,
   totalSpent,
   type Expense,
@@ -61,12 +60,6 @@ export function useOverallSummary() {
 export function usePaidByMember() {
   const { members, expenses } = useAppData();
   return useMemo(() => totalPaidByMember(members, expenses), [members, expenses]);
-}
-
-/** memberId -> total consumed (sum of shares in non-deleted expenses). */
-export function useConsumedByMember() {
-  const { members, expenses } = useAppData();
-  return useMemo(() => totalConsumedByMember(members, expenses), [members, expenses]);
 }
 
 /**
