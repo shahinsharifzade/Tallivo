@@ -504,3 +504,8 @@
     transform: translateY(-1.5px);
   }
 }
+
+/* Keeps focused and scrolled-to elements clear of the sticky header. */
+html {
+  scroll-padding-top: 5rem;
+}

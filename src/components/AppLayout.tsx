@@ -39,7 +39,7 @@ export function AppLayout() {
       <CelebrateProvider>
         <div className="min-h-dvh pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
           <ScrollToTop />
-          <header className="border-b border-line bg-surface">
+          <header className="sticky top-0 z-20 border-b border-line bg-surface">
             <div className="relative mx-auto flex max-w-2xl items-center justify-between gap-4 px-4 py-3">
               <NavLink
                 to="/"
