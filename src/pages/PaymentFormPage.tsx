@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { DateField } from '../components/DateField';
 import { MemberChips } from '../components/MemberChips';
 import { MoneyInput } from '../components/MoneyInput';
 import { buttonClass, inputClass } from '../components/styles';
@@ -8,16 +9,21 @@ import { isIsoDate, parseMoney, type Id } from '../domain';
 import { az } from '../i18n/az';
 import { todayIso } from '../lib/dates';
 import { moneyErrorMessage } from '../lib/errors';
+import { useAccount } from '../state/backend';
 import { useActions, useAppData } from '../state/hooks';
 import { useFeedback } from '../state/feedback';
 import { useSubmit } from '../state/useSubmit';
 
 const t = az.paymentForm;
 
-/** Record a repayment. Accepts ?from=&to=&amount= to prefill from a suggested transfer. */
+/**
+ * Record a repayment. Accepts ?from=&to=&amount= to prefill from a suggested transfer; without
+ * ?from= the payer defaults to the signed-in member (shared mode only).
+ */
 export function PaymentFormPage() {
   const [params] = useSearchParams();
   const { members } = useAppData();
+  const account = useAccount();
   const actions = useActions();
   const navigate = useNavigate();
   const feedback = useFeedback();
@@ -28,7 +34,11 @@ export function PaymentFormPage() {
     return id && members.some((m) => m.id === id) ? id : null;
   };
 
-  const [from, setFrom] = useState<Id | null>(() => memberParam('from'));
+  const [from, setFrom] = useState<Id | null>(() => {
+    const signedIn = account?.memberId;
+    const fallback = signedIn && members.some((m) => m.id === signedIn) ? signedIn : null;
+    return memberParam('from') ?? fallback;
+  });
   const [to, setTo] = useState<Id | null>(() => memberParam('to'));
   const [amount, setAmount] = useState(() => params.get('amount') ?? '');
   const [date, setDate] = useState(todayIso);
@@ -38,7 +48,8 @@ export function PaymentFormPage() {
   const parsed = parseMoney(amount);
   const amountError = parsed.ok ? null : moneyErrorMessage(parsed.error);
   const fromError = from ? null : t.fromRequired;
-  const toError = !to ? t.toRequired : to === from ? t.sameMember : null;
+  const sameMember = !!to && to === from;
+  const toError = !to ? t.toRequired : sameMember ? t.sameMember : null;
   const dateError = isIsoDate(date) ? null : az.meetupForm.dateInvalid;
 
   const onSubmit = async (e: FormEvent) => {
@@ -68,19 +79,11 @@ export function PaymentFormPage() {
             <MemberChips
               members={members}
               selected={new Set(from ? [from] : [])}
-              onToggle={(id) => {
-                setFrom(id);
-                if (to === id) setTo(null);
-              }}
+              onToggle={setFrom}
             />
           </FieldGroup>
-          <FieldGroup legend={t.to} error={submitted ? toError : null}>
-            <MemberChips
-              members={members}
-              selected={new Set(to ? [to] : [])}
-              onToggle={setTo}
-              disabledIds={new Set(from ? [from] : [])}
-            />
+          <FieldGroup legend={t.to} error={submitted || sameMember ? toError : null}>
+            <MemberChips members={members} selected={new Set(to ? [to] : [])} onToggle={setTo} />
           </FieldGroup>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
@@ -97,12 +100,11 @@ export function PaymentFormPage() {
               />
             </Field>
             <Field id="payment-date" label={az.common.date} error={submitted ? dateError : null}>
-              <input
+              <DateField
                 id="payment-date"
-                type="date"
-                className={inputClass}
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={setDate}
+                invalid={submitted && !!dateError}
               />
             </Field>
           </div>
@@ -117,7 +119,11 @@ export function PaymentFormPage() {
           </Field>
           {error && <ErrorText>{error}</ErrorText>}
           <div className="flex gap-2">
-            <button type="submit" className={buttonClass('primary', 'flex-1')} disabled={pending}>
+            <button
+              type="submit"
+              className={buttonClass('primary', 'flex-1')}
+              disabled={pending || sameMember}
+            >
               {pending ? az.common.saving : t.submit}
             </button>
             <button type="button" className={buttonClass('ghost')} onClick={() => navigate('/')}>

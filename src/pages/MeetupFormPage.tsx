@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { DateField } from '../components/DateField';
 import { buttonClass, inputClass } from '../components/styles';
 import { Card, ErrorText, Field, PageHeader } from '../components/ui';
 import { isIsoDate } from '../domain';
@@ -80,13 +81,11 @@ function MeetupForm({
             />
           </Field>
           <Field id="meetup-date" label={az.common.date} error={submitted ? dateError : null}>
-            <input
+            <DateField
               id="meetup-date"
-              type="date"
-              className={inputClass}
               value={date}
-              onChange={(e) => setDate(e.target.value)}
-              aria-invalid={submitted && !!dateError}
+              onChange={setDate}
+              invalid={submitted && !!dateError}
             />
           </Field>
           <Field id="meetup-note" label={`${az.common.note} (${az.common.optional})`}>

@@ -135,6 +135,21 @@
   .bar-grow {
     animation: bar-grow 300ms ease-out backwards;
   }
+  /* Bottom sheet on phones, small popover from 640px up. */
+  .date-sheet {
+    animation: sheet-up 240ms ease-out backwards;
+  }
+  @media (min-width: 640px) {
+    .date-sheet {
+      animation: settle-in 150ms ease-out backwards;
+    }
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
 }
 
 @keyframes arrow-nudge {

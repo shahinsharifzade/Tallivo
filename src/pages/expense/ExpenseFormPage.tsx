@@ -8,6 +8,7 @@ import { buttonClass, inputClass } from '../../components/styles';
 import { Card, ErrorText, Field, FieldGroup, PageHeader } from '../../components/ui';
 import { formatMoney, type Expense, type Id, type Member } from '../../domain';
 import { az } from '../../i18n/az';
+import { useCountUp } from '../../lib/motion';
 import { useActions, useAppData, useMeetup } from '../../state/hooks';
 import { useFeedback } from '../../state/feedback';
 import { useSubmit } from '../../state/useSubmit';
@@ -16,11 +17,48 @@ import {
   draftFromExpense,
   evaluateDraft,
   newDraft,
+  switchSplitMode,
   type ExpenseDraft,
   type SplitMode,
 } from './expenseDraft';
 
 const t = az.expenseForm;
+
+const TOTAL_TICK_MS = 180;
+/** From 10,000 ₼ the large size would overflow the box on a narrow phone. */
+const SMALL_TOTAL_FROM_MINOR = 1_000_000;
+
+/** Custom mode's read-only total: always the live sum of the individual amounts. */
+function ComputedTotal({ minor, error }: { minor: number; error?: string }) {
+  const shown = useCountUp(minor, TOTAL_TICK_MS);
+  return (
+    <div
+      className={`rounded-card px-4 py-4 text-center ring-1 ${
+        error ? 'bg-neg-soft ring-neg' : 'bg-surface-2 ring-line'
+      }`}
+    >
+      <p className="flex items-center justify-center gap-1.5 text-sm font-medium text-ink-soft">
+        <span
+          aria-hidden="true"
+          className="flex h-5 w-5 items-center justify-center rounded-full bg-accent-soft text-xs font-bold text-accent-ink"
+        >
+          Σ
+        </span>
+        {t.computedTotal}
+      </p>
+      <p
+        aria-hidden="true"
+        className={`tabular mt-1 font-bold tracking-tight text-ink ${
+          shown >= SMALL_TOTAL_FROM_MINOR ? 'text-3xl' : 'text-5xl'
+        }`}
+      >
+        {formatMoney(shown)}
+      </p>
+      <p className="sr-only">{formatMoney(minor)}</p>
+      {error && <p className="mt-1 text-sm text-neg">{error}</p>}
+    </div>
+  );
+}
 
 /** /meetups/:meetupId/expenses/new and /meetups/:meetupId/expenses/:expenseId/edit */
 export function ExpenseFormPage() {
@@ -67,20 +105,24 @@ function ExpenseForm({
     () => evaluateDraft(draft, members, meetupId),
     [draft, members, meetupId],
   );
-  const { errors, customErrors, totalMinor, remainingMinor, assignedMinor } = evaluation;
+  const { errors, customErrors, totalMinor, assignedMinor } = evaluation;
 
   const update = (patch: Partial<ExpenseDraft>) => setDraft((d) => ({ ...d, ...patch }));
 
   const toggleParticipant = (id: Id) =>
     setDraft((d) => {
       const next = new Set(d.participants);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return { ...d, participants: next };
+      const custom = { ...d.custom };
+      if (next.has(id)) {
+        next.delete(id);
+        delete custom[id];
+      } else {
+        next.add(id);
+      }
+      return { ...d, participants: next, custom };
     });
 
   const backTo = `/meetups/${meetupId}`;
-  const customMismatch = draft.mode === 'custom' && remainingMinor !== null && remainingMinor !== 0;
   const totalTyped = draft.total.trim() !== '';
   const showTotalError = (submitted || totalTyped) && errors.total;
 
@@ -107,22 +149,26 @@ function ExpenseForm({
       />
       <Card>
         <form onSubmit={onSubmit} className="space-y-5" noValidate>
-          <div>
-            <HeroMoneyInput
-              id="expense-total"
-              label={t.total}
-              value={draft.total}
-              onChange={(e) => update({ total: e.target.value })}
-              invalid={!!showTotalError}
-              aria-describedby={showTotalError ? 'expense-total-error' : undefined}
-              autoFocus={!expense}
-            />
-            {showTotalError && (
-              <p id="expense-total-error" className="mt-1 text-center text-sm text-neg">
-                {errors.total}
-              </p>
-            )}
-          </div>
+          {draft.mode === 'custom' ? (
+            <ComputedTotal minor={assignedMinor} error={errors.total} />
+          ) : (
+            <div>
+              <HeroMoneyInput
+                id="expense-total"
+                label={t.total}
+                value={draft.total}
+                onChange={(e) => update({ total: e.target.value })}
+                invalid={!!showTotalError}
+                aria-describedby={showTotalError ? 'expense-total-error' : undefined}
+                autoFocus={!expense}
+              />
+              {showTotalError && (
+                <p id="expense-total-error" className="mt-1 text-center text-sm text-neg">
+                  {errors.total}
+                </p>
+              )}
+            </div>
+          )}
 
           <Field id="expense-title" label={t.title} error={submitted ? errors.title : null}>
             <input
@@ -173,7 +219,7 @@ function ExpenseForm({
                   key={mode}
                   type="button"
                   aria-pressed={draft.mode === mode}
-                  onClick={() => update({ mode })}
+                  onClick={() => setDraft((d) => switchSplitMode(d, mode, members))}
                   className={`min-h-11 rounded-lg font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
                     draft.mode === mode ? 'bg-surface text-ink shadow-card' : 'text-ink-soft'
                   }`}
@@ -212,9 +258,10 @@ function ExpenseForm({
             <div className="space-y-3">
               <SplitBar
                 shares={evaluation.validCustomShares}
-                totalMinor={totalMinor}
+                totalMinor={assignedMinor}
                 members={members}
                 label={t.splitBarLabel}
+                showAmounts
               />
               {evaluation.orderedParticipants.map((m) => {
                 const raw = draft.custom[m.id] ?? '';
@@ -246,26 +293,6 @@ function ExpenseForm({
                   </div>
                 );
               })}
-              <p
-                aria-live="polite"
-                className={`tabular flex flex-wrap items-baseline justify-between gap-x-3 rounded-control px-3 py-2 text-sm transition-colors duration-300 ${
-                  totalMinor !== null && remainingMinor === 0
-                    ? 'bg-pos-soft text-pos'
-                    : 'bg-neg-soft text-neg'
-                }`}
-              >
-                <span>
-                  {t.assigned(
-                    formatMoney(assignedMinor),
-                    totalMinor === null ? '—' : formatMoney(totalMinor),
-                  )}
-                </span>
-                <span className="text-base font-bold">
-                  {remainingMinor !== null && remainingMinor < 0
-                    ? t.over(formatMoney(-remainingMinor))
-                    : t.remaining(formatMoney(remainingMinor ?? 0))}
-                </span>
-              </p>
               {submitted && errors.customAmounts && <ErrorText>{errors.customAmounts}</ErrorText>}
               {submitted && errors.customSum && <ErrorText>{errors.customSum}</ErrorText>}
             </div>
@@ -284,11 +311,7 @@ function ExpenseForm({
           {error && <ErrorText>{error}</ErrorText>}
 
           <div className="flex gap-2">
-            <button
-              type="submit"
-              className={buttonClass('primary', 'flex-1')}
-              disabled={pending || customMismatch}
-            >
+            <button type="submit" className={buttonClass('primary', 'flex-1')} disabled={pending}>
               {pending ? az.common.saving : az.common.save}
             </button>
             <button type="button" className={buttonClass('ghost')} onClick={() => navigate(backTo)}>

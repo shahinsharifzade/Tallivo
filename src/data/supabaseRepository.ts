@@ -197,17 +197,16 @@ function unwrap<T>(res: Result<T>, fallback: AppErrorCode): T {
 }
 
 /**
- * Name of the member linked to this login (members.user_id), or null when the account is not
- * linked. Unlinked users cannot read members at all (RLS), so they also get null.
+ * The member linked to this login (members.user_id), or null when the account is not linked.
+ * Unlinked users cannot read members at all (RLS), so they also get null.
  */
-export async function fetchLinkedMemberName(
+export async function fetchLinkedMember(
   client: SupabaseClient,
   userId: string,
-): Promise<string | null> {
-  const res = await client.from('members').select('name').eq('user_id', userId).maybeSingle();
+): Promise<{ id: string; name: string } | null> {
+  const res = await client.from('members').select('id, name').eq('user_id', userId).maybeSingle();
   if (res.error) throw toAppError(res.error, res.status, 'notAllowed');
-  const row = res.data as { name: string } | null;
-  return row?.name ?? null;
+  return res.data as { id: string; name: string } | null;
 }
 
 /** Throws a mapped AppError if the call failed (for calls that return no data). */

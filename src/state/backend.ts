@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Repository } from '../data/repository';
+import type { Id } from '../domain';
 
 /** Which storage the app runs on. Chosen once in main.tsx. */
 export type Backend =
@@ -9,6 +10,7 @@ export type Backend =
 
 /** The signed-in person (shared mode only). */
 export interface Account {
+  memberId: Id;
   memberName: string;
   signOut(): Promise<void>;
 }

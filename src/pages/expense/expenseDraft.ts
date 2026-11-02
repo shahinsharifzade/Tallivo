@@ -6,6 +6,7 @@ import {
   sortMembers,
   splitEqually,
   validateExpense,
+  MAX_AMOUNT_MINOR,
   type Expense,
   type ExpenseShare,
   type Id,
@@ -49,10 +50,8 @@ export interface DraftEvaluation {
   shares: ExpenseShare[] | null;
   /** Custom mode: the per-member amounts that currently parse (for the live split bar). */
   validCustomShares: ExpenseShare[];
-  /** Custom mode: sum of the amounts that parse. */
+  /** Custom mode: sum of the amounts that parse; this is the computed total. */
   assignedMinor: Minor;
-  /** Custom mode: total - assigned (null if the total is invalid). */
-  remainingMinor: Minor | null;
   input: ExpenseInput | null;
 }
 
@@ -90,6 +89,36 @@ export function draftFromExpense(expense: Expense, members: readonly Member[]): 
   };
 }
 
+/**
+ * Equal -> custom prefills each amount from the equal split of a valid total.
+ * Custom -> equal prefills the total with the current sum of the amounts.
+ */
+export function switchSplitMode(
+  draft: ExpenseDraft,
+  mode: SplitMode,
+  members: readonly Member[],
+): ExpenseDraft {
+  if (mode === draft.mode) return draft;
+  const ordered = sortMembers(members).filter((m) => draft.participants.has(m.id));
+  if (mode === 'custom') {
+    const parsed = parseMoney(draft.total);
+    if (!parsed.ok || ordered.length === 0) return { ...draft, mode };
+    const custom: Record<Id, string> = {};
+    const shares = splitEqually(
+      parsed.minor,
+      ordered.map((m) => m.id),
+    );
+    for (const s of shares) custom[s.memberId] = formatMoneyPlain(s.amountMinor);
+    return { ...draft, mode, custom };
+  }
+  let sum = 0;
+  for (const m of ordered) {
+    const parsed = parseMoney(draft.custom[m.id] ?? '');
+    if (parsed.ok) sum += parsed.minor;
+  }
+  return { ...draft, mode, total: sum > 0 ? formatMoneyPlain(sum) : '' };
+}
+
 export function evaluateDraft(
   draft: ExpenseDraft,
   members: readonly Member[],
@@ -104,15 +133,15 @@ export function evaluateDraft(
   if (!draft.paidBy) errors.paidBy = t.paidByRequired;
   if (orderedParticipants.length === 0) errors.participants = t.participantsRequired;
 
-  const parsedTotal = parseMoney(draft.total);
-  const totalMinor = parsedTotal.ok ? parsedTotal.minor : null;
-  if (!parsedTotal.ok) errors.total = moneyErrorMessage(parsedTotal.error);
-
+  let totalMinor: Minor | null = null;
   let shares: ExpenseShare[] | null = null;
   let assignedMinor = 0;
   let validCustomShares: ExpenseShare[] = [];
 
   if (draft.mode === 'equal') {
+    const parsedTotal = parseMoney(draft.total);
+    if (parsedTotal.ok) totalMinor = parsedTotal.minor;
+    else errors.total = moneyErrorMessage(parsedTotal.error);
     if (totalMinor !== null && orderedParticipants.length > 0) {
       shares = splitEqually(
         totalMinor,
@@ -127,17 +156,18 @@ export function evaluateDraft(
         assignedMinor += parsed.minor;
         customShares.push({ memberId: m.id, amountMinor: parsed.minor });
       } else {
-        customErrors[m.id] = moneyErrorMessage(parsed.error);
+        customErrors[m.id] =
+          parsed.error === 'empty'
+            ? t.customAmountRequired(m.name)
+            : moneyErrorMessage(parsed.error);
       }
     }
     validCustomShares = customShares;
     if (Object.keys(customErrors).length > 0) errors.customAmounts = t.customAmountsInvalid;
     else if (orderedParticipants.length > 0) shares = customShares;
-  }
-
-  const remainingMinor = totalMinor === null ? null : totalMinor - assignedMinor;
-  if (draft.mode === 'custom' && remainingMinor !== null && remainingMinor !== 0) {
-    errors.customSum = t.sumMismatch;
+    // The total is always the sum, so it inherits the limit a typed total has in parseMoney.
+    if (assignedMinor > MAX_AMOUNT_MINOR) errors.total = az.money.tooLarge;
+    else if (assignedMinor > 0) totalMinor = assignedMinor;
   }
 
   let input: ExpenseInput | null = null;
@@ -163,7 +193,6 @@ export function evaluateDraft(
     shares,
     validCustomShares,
     assignedMinor,
-    remainingMinor,
     input,
   };
 }

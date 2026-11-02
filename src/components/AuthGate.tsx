@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
-import { fetchLinkedMemberName } from '../data/supabaseRepository';
+import { fetchLinkedMember } from '../data/supabaseRepository';
 import { az } from '../i18n/az';
 import { LoginPage } from '../pages/LoginPage';
 import { AccountContext, type Account } from '../state/backend';
@@ -12,7 +12,7 @@ import { Card } from './ui';
 const t = az.auth;
 
 type LinkResult =
-  | { status: 'linked'; memberName: string }
+  | { status: 'linked'; memberId: string; memberName: string }
   | { status: 'notLinked' }
   | { status: 'error'; message: string };
 
@@ -70,13 +70,13 @@ export function AuthGate({
     if (!userId) return;
     let cancelled = false;
     setLink(null);
-    fetchLinkedMemberName(client, userId)
-      .then((name) => {
+    fetchLinkedMember(client, userId)
+      .then((member) => {
         if (cancelled) return;
         setLink(
-          name === null
+          member === null
             ? { userId, status: 'notLinked' }
-            : { userId, status: 'linked', memberName: name },
+            : { userId, status: 'linked', memberId: member.id, memberName: member.name },
         );
       })
       .catch((e: unknown) => {
@@ -104,7 +104,10 @@ export function AuthGate({
   const link = storedLink && storedLink.userId === userId ? storedLink : null;
 
   const account = useMemo<Account | null>(
-    () => (link?.status === 'linked' ? { memberName: link.memberName, signOut } : null),
+    () =>
+      link?.status === 'linked'
+        ? { memberId: link.memberId, memberName: link.memberName, signOut }
+        : null,
     [link, signOut],
   );
 
