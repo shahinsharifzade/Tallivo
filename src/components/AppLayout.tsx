@@ -3,7 +3,9 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { az } from '../i18n/az';
 import { useSettledTransition } from '../state/celebration';
 import { useAppData, useOverallSummary, useRetryLoad } from '../state/hooks';
+import { CelebrateProvider } from './CelebrateProvider';
 import { FeedbackProvider } from './FeedbackProvider';
+import { HeaderSkeletons } from './HeaderSkeletons';
 import { Logo } from './Logo';
 import { CalendarIcon, ClockIcon, HomeIcon, SettingsIcon, UserIcon } from './icons';
 import { buttonClass } from './styles';
@@ -34,105 +36,108 @@ export function AppLayout() {
 
   return (
     <FeedbackProvider>
-      <div className="min-h-dvh pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
-        <ScrollToTop />
-        <header className="border-b border-line bg-surface">
-          <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-4 py-3">
-            <NavLink
-              to="/"
-              aria-label={az.app.name}
-              className="rounded-control focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-            >
-              <Logo />
-            </NavLink>
-            <nav aria-label={az.nav.label} className="hidden md:block">
-              <ul className="flex gap-1">
-                {tabs.map((tab) => (
-                  <li key={tab.to}>
-                    <NavLink
-                      to={tab.to}
-                      end={tab.end}
-                      className={({ isActive }) =>
-                        `flex min-h-11 items-center rounded-control px-3 font-medium ${
-                          isActive
-                            ? 'bg-accent-soft text-accent-ink'
-                            : 'text-ink-soft hover:bg-surface-2'
-                        }`
-                      }
-                    >
-                      {tab.label}
-                    </NavLink>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </div>
-        </header>
-
-        <main className="mx-auto max-w-2xl px-4 py-4">
-          {status === 'loading' && (
-            <p className="py-10 text-center text-ink-muted">{az.app.loading}</p>
-          )}
-          {status === 'error' && (
-            <div role="alert" className="py-10 text-center">
-              <p className="text-neg">{az.app.loadError}</p>
-              {loadError && <p className="mt-1 text-sm text-ink-muted">{loadError}</p>}
-              <button
-                type="button"
-                className={buttonClass('secondary', 'mt-4')}
-                onClick={() => void retry()}
+      <CelebrateProvider>
+        <div className="min-h-dvh pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
+          <ScrollToTop />
+          <header className="border-b border-line bg-surface">
+            <div className="relative mx-auto flex max-w-2xl items-center justify-between gap-4 px-4 py-3">
+              <NavLink
+                to="/"
+                aria-label={az.app.name}
+                className="rounded-control focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
               >
-                {az.app.retry}
-              </button>
+                <Logo />
+              </NavLink>
+              <HeaderSkeletons ready={status === 'ready'} />
+              <nav aria-label={az.nav.label} className="hidden md:block">
+                <ul className="flex gap-1">
+                  {tabs.map((tab) => (
+                    <li key={tab.to}>
+                      <NavLink
+                        to={tab.to}
+                        end={tab.end}
+                        className={({ isActive }) =>
+                          `flex min-h-11 items-center rounded-control px-3 font-medium ${
+                            isActive
+                              ? 'bg-accent-soft text-accent-ink'
+                              : 'text-ink-soft hover:bg-surface-2'
+                          }`
+                        }
+                      >
+                        {tab.label}
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
             </div>
-          )}
-          {status === 'ready' && stale && (
-            <div
-              role="alert"
-              className="mb-4 flex items-center gap-3 rounded-control bg-neg-soft px-3 py-2 text-sm text-neg"
-            >
-              <p className="flex-1">{az.app.staleBanner}</p>
-              <button
-                type="button"
-                className={buttonClass('secondary', 'shrink-0')}
-                onClick={() => void retry()}
-              >
-                {az.app.retry}
-              </button>
-            </div>
-          )}
-          {status === 'ready' && (
-            // Keyed by path so each screen gets the short fade/slide entrance.
-            <div key={pathname} className="page-in">
-              <Outlet context={celebration} />
-            </div>
-          )}
-        </main>
+          </header>
 
-        <nav
-          aria-label={az.nav.label}
-          className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
-        >
-          <ul className="mx-auto grid max-w-2xl grid-cols-5">
-            {tabs.map((tab) => (
-              <li key={tab.to}>
-                <NavLink
-                  to={tab.to}
-                  end={tab.end}
-                  className={({ isActive }) =>
-                    `flex min-h-16 flex-col items-center justify-center gap-0.5 text-xs font-medium ${
-                      isActive ? 'text-accent-ink' : 'text-ink-muted'
-                    }`
-                  }
+          <main className="mx-auto max-w-2xl px-4 py-4">
+            {status === 'loading' && (
+              <p className="py-10 text-center text-ink-muted">{az.app.loading}</p>
+            )}
+            {status === 'error' && (
+              <div role="alert" className="py-10 text-center">
+                <p className="text-neg">{az.app.loadError}</p>
+                {loadError && <p className="mt-1 text-sm text-ink-muted">{loadError}</p>}
+                <button
+                  type="button"
+                  className={buttonClass('secondary', 'mt-4')}
+                  onClick={() => void retry()}
                 >
-                  {tab.icon}
-                  {tab.label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </div>
+                  {az.app.retry}
+                </button>
+              </div>
+            )}
+            {status === 'ready' && stale && (
+              <div
+                role="alert"
+                className="mb-4 flex items-center gap-3 rounded-control bg-neg-soft px-3 py-2 text-sm text-neg"
+              >
+                <p className="flex-1">{az.app.staleBanner}</p>
+                <button
+                  type="button"
+                  className={buttonClass('secondary', 'shrink-0')}
+                  onClick={() => void retry()}
+                >
+                  {az.app.retry}
+                </button>
+              </div>
+            )}
+            {status === 'ready' && (
+              // Keyed by path so each screen gets the short fade/slide entrance.
+              <div key={pathname} className="page-in">
+                <Outlet context={celebration} />
+              </div>
+            )}
+          </main>
+
+          <nav
+            aria-label={az.nav.label}
+            className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+          >
+            <ul className="mx-auto grid max-w-2xl grid-cols-5">
+              {tabs.map((tab) => (
+                <li key={tab.to}>
+                  <NavLink
+                    to={tab.to}
+                    end={tab.end}
+                    className={({ isActive }) =>
+                      `flex min-h-16 flex-col items-center justify-center gap-0.5 text-xs font-medium ${
+                        isActive ? 'text-accent-ink' : 'text-ink-muted'
+                      }`
+                    }
+                  >
+                    {tab.icon}
+                    {tab.label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      </CelebrateProvider>
     </FeedbackProvider>
   );
 }

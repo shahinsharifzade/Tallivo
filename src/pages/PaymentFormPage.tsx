@@ -12,7 +12,7 @@ import { todayIso } from '../lib/dates';
 import { moneyErrorMessage } from '../lib/errors';
 import { useAccount } from '../state/backend';
 import { useActions, useAppData } from '../state/hooks';
-import { useFeedback } from '../state/feedback';
+import { useCelebrate } from '../state/celebrate';
 import { useSubmit } from '../state/useSubmit';
 
 const t = az.paymentForm;
@@ -27,7 +27,7 @@ export function PaymentFormPage() {
   const account = useAccount();
   const actions = useActions();
   const navigate = useNavigate();
-  const feedback = useFeedback();
+  const celebrate = useCelebrate();
   const { pending, error, run } = useSubmit();
 
   const memberParam = (key: string): Id | null => {
@@ -61,16 +61,16 @@ export function PaymentFormPage() {
     setSubmitted(true);
     if (!parsed.ok || !from || !to || toError || dateError) return;
     const ok = await run(async () => {
-      await actions.createSettlement({
+      const saved = await actions.createSettlement({
         fromMemberId: from,
         toMemberId: to,
         amountMinor: parsed.minor,
         date,
         note,
       });
+      celebrate.payment(saved);
     });
     if (!ok) return;
-    feedback.saved();
     navigate('/', { replace: true });
   };
 

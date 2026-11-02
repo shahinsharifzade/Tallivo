@@ -12,6 +12,7 @@ import { formatMoney } from '../domain';
 import { az } from '../i18n/az';
 import { useCountUp } from '../lib/motion';
 import { paymentLink } from '../lib/paymentLink';
+import { useCelebrate } from '../state/celebrate';
 import { useCelebration } from '../state/celebration';
 import { useAppData, useOverallSummary, usePaidByMember } from '../state/hooks';
 
@@ -21,14 +22,16 @@ export function OverviewPage() {
   const hasData = expenses.some((e) => !e.deletedAt) || settlements.some((s) => !s.deletedAt);
   const celebration = useCelebration();
   const paid = usePaidByMember();
+  const { active: celebrating } = useCelebrate();
   const [confetti, setConfetti] = useState(false);
 
   // Confetti only right after the group became settled, never on a plain page load.
   useEffect(() => {
     if (!celebration.pending) return;
     celebration.consume();
-    setConfetti(true);
-  }, [celebration]);
+    // The payment that settled everything is already showing its own confetti.
+    if (!celebrating) setConfetti(true);
+  }, [celebration, celebrating]);
 
   if (!hasData) {
     return (

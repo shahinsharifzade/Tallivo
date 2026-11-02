@@ -301,6 +301,11 @@ export const az = {
     tooManyDecimals: 'Ən çoxu 2 onluq rəqəm (qəpik).',
     tooLarge: 'Məbləğ çox böyükdür.',
   },
+  celebrate: {
+    paymentTitle: 'Ödəniş tamamlandı! 🎉',
+    splitSummary: (title: string, total: string, shares: string) =>
+      `«${title}» saxlanıldı: ${total}. ${shares}`,
+  },
   feedback: {
     saved: 'Yadda saxlanıldı',
     copied: 'Kopyalandı',

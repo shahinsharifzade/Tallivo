@@ -7,6 +7,7 @@ import { isIsoDate } from '../domain';
 import { az } from '../i18n/az';
 import { todayIso } from '../lib/dates';
 import { useActions, useMeetup } from '../state/hooks';
+import { useCelebrate } from '../state/celebrate';
 import { useFeedback } from '../state/feedback';
 import { useSubmit } from '../state/useSubmit';
 import { NotFoundPage } from './NotFoundPage';
@@ -29,6 +30,7 @@ function MeetupForm({
   const actions = useActions();
   const navigate = useNavigate();
   const feedback = useFeedback();
+  const celebrate = useCelebrate();
   const { pending, error, run } = useSubmit();
   const [title, setTitle] = useState(initial?.title ?? '');
   const [date, setDate] = useState(initial?.date ?? todayIso());
@@ -46,7 +48,10 @@ function MeetupForm({
     const ok = await run(async () => {
       const input = { title, date, note };
       if (meetupId) await actions.updateMeetup(meetupId, input);
-      else targetId = (await actions.createMeetup(input)).id;
+      else {
+        targetId = (await actions.createMeetup(input)).id;
+        celebrate.markNewMeetup(targetId);
+      }
     });
     if (!ok || !targetId) return;
     feedback.saved();

@@ -228,3 +228,279 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ---- Payment celebration: one 2 s timeline, in and out. ---- */
+.celebrate-card {
+  animation: celebrate-card 2000ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes celebrate-card {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+  }
+  18%,
+  86% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+/* ---- Expense split: coins fly out of the total to each avatar. ---- */
+.split-overlay {
+  animation: split-overlay 2700ms ease both;
+}
+@keyframes split-overlay {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  7%,
+  92% {
+    opacity: 1;
+  }
+}
+.split-coin {
+  opacity: 0;
+  animation: split-coin 620ms cubic-bezier(0.45, 0.05, 0.3, 1) both;
+}
+@keyframes split-coin {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  15% {
+    opacity: 1;
+  }
+  55% {
+    transform: translate(var(--mx), var(--my)) scale(1);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--x), var(--y)) scale(0.5);
+  }
+}
+.split-center {
+  animation: split-center 1500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes split-center {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  22% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  36% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0.94);
+  }
+}
+.split-check {
+  animation: settle-in 300ms cubic-bezier(0.34, 1.56, 0.64, 1) 1900ms backwards;
+}
+.split-avatar {
+  animation: settle-in 300ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.split-share {
+  animation: settle-in 280ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* ---- A newly created meetup's card, once. Overrides the list's stagger entrance. ---- */
+.stagger > .meetup-new {
+  animation: meetup-new 520ms cubic-bezier(0.22, 1, 0.36, 1) 120ms backwards;
+}
+@keyframes meetup-new {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.01);
+  }
+}
+.meetup-new-accent {
+  animation: meetup-new-accent 1300ms ease-out 350ms both;
+}
+@keyframes meetup-new-accent {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.5) rotate(-18deg);
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.1) rotate(6deg);
+  }
+  75% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.9);
+  }
+}
+
+/* ---- Header skeletons. Horizontal travel is a % of the header, so it fits every width. ---- */
+.sk-track {
+  animation: sk-run linear both;
+}
+.sk-track-a {
+  animation-duration: 3400ms;
+}
+.sk-track-b {
+  animation-duration: 3800ms;
+  animation-delay: 150ms;
+}
+.sk-track-c {
+  animation-name: sk-run-stumble;
+  animation-duration: 4300ms;
+  animation-delay: 250ms;
+  animation-timing-function: ease-in-out;
+}
+.sk-track-d {
+  animation-duration: 4200ms;
+  animation-delay: 400ms;
+}
+@keyframes sk-run {
+  from {
+    transform: translateX(-6%);
+  }
+  to {
+    transform: translateX(106%);
+  }
+}
+@keyframes sk-run-stumble {
+  0% {
+    transform: translateX(-6%);
+  }
+  34% {
+    transform: translateX(34%);
+  }
+  50% {
+    transform: translateX(37%);
+  }
+  100% {
+    transform: translateX(106%);
+  }
+}
+.sk-body-b {
+  animation: sk-hop 3800ms ease-in-out 150ms both;
+}
+.sk-body-c {
+  transform-origin: 50% 100%;
+  animation: sk-tumble 4300ms ease-in-out 250ms both;
+}
+@keyframes sk-hop {
+  0%,
+  28%,
+  36%,
+  62%,
+  70%,
+  100% {
+    transform: translateY(0);
+  }
+  32% {
+    transform: translateY(-7px) rotate(-8deg);
+  }
+  66% {
+    transform: translateY(-5px) rotate(8deg);
+  }
+}
+@keyframes sk-tumble {
+  0%,
+  33%,
+  54%,
+  100% {
+    transform: none;
+  }
+  38% {
+    transform: rotate(82deg);
+  }
+  47% {
+    transform: rotate(88deg) translateY(1px);
+  }
+}
+.sk-leg,
+.sk-leg-lower,
+.sk-arm,
+.sk-arm-lower,
+.sk-bob {
+  transform-box: view-box;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+.sk-leg {
+  transform-origin: 12px 20px;
+  animation-name: sk-leg;
+}
+.sk-leg-lower {
+  transform-origin: 12px 25px;
+  animation-name: sk-leg-lower;
+}
+.sk-arm {
+  transform-origin: 12px 12px;
+  animation-name: sk-arm;
+}
+.sk-arm-lower {
+  transform-origin: 12px 17px;
+  animation-name: sk-arm-lower;
+}
+.sk-bob {
+  animation-name: sk-bob;
+}
+@keyframes sk-leg {
+  0%,
+  100% {
+    transform: rotate(-42deg);
+  }
+  50% {
+    transform: rotate(34deg);
+  }
+}
+@keyframes sk-leg-lower {
+  0%,
+  100% {
+    transform: rotate(18deg);
+  }
+  50% {
+    transform: rotate(78deg);
+  }
+}
+@keyframes sk-arm {
+  0%,
+  100% {
+    transform: rotate(38deg);
+  }
+  50% {
+    transform: rotate(-44deg);
+  }
+}
+@keyframes sk-arm-lower {
+  0%,
+  100% {
+    transform: rotate(-30deg);
+  }
+  50% {
+    transform: rotate(-80deg);
+  }
+}
+@keyframes sk-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}

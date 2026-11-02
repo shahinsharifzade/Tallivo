@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { az } from '../i18n/az';
+import { vibrate } from '../lib/haptics';
 import { errorMessage } from '../state/errorMessage';
 import { FeedbackContext, type Feedback } from '../state/feedback';
 import { CheckIcon } from './icons';
@@ -11,15 +12,6 @@ type Toast =
 
 const SAVED_MS = 1400;
 const UNDO_MS = 5000;
-
-/** Optional haptic tap; silently ignored where unsupported. */
-function vibrate(): void {
-  try {
-    navigator.vibrate?.(15);
-  } catch {
-    // Not supported or blocked: nothing to do.
-  }
-}
 
 /** Provides toasts (saved checkmark, undo) above the bottom tab bar. */
 export function FeedbackProvider({ children }: { children: ReactNode }) {

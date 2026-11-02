@@ -10,6 +10,7 @@ import { formatMoney, type Expense, type Id, type Member } from '../../domain';
 import { az } from '../../i18n/az';
 import { useCountUp } from '../../lib/motion';
 import { useActions, useAppData, useMeetup } from '../../state/hooks';
+import { useCelebrate } from '../../state/celebrate';
 import { useFeedback } from '../../state/feedback';
 import { useSubmit } from '../../state/useSubmit';
 import { NotFoundPage } from '../NotFoundPage';
@@ -95,6 +96,7 @@ function ExpenseForm({
   const actions = useActions();
   const navigate = useNavigate();
   const feedback = useFeedback();
+  const celebrate = useCelebrate();
   const { pending, error, run } = useSubmit();
   const [draft, setDraft] = useState<ExpenseDraft>(() =>
     expense ? draftFromExpense(expense, members) : newDraft(members),
@@ -133,10 +135,10 @@ function ExpenseForm({
     if (!input) return;
     const ok = await run(async () => {
       if (expense) await actions.updateExpense(expense.id, input);
-      else await actions.createExpense(input);
+      else celebrate.expenseSplit(await actions.createExpense(input));
     });
     if (!ok) return;
-    feedback.saved();
+    if (expense) feedback.saved();
     navigate(backTo, { replace: true });
   };
 

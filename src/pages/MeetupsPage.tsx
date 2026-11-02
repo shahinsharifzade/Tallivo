@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { AvatarStack } from '../components/Avatar';
 import { MeetupsArt } from '../components/illustrations';
@@ -9,6 +10,7 @@ import { formatMoney } from '../domain';
 import { az } from '../i18n/az';
 import { formatDate } from '../lib/format';
 import { meetupIcon } from '../lib/meetupIcon';
+import { useCelebrate } from '../state/celebrate';
 import { useFeedback } from '../state/feedback';
 import { useActions, useMeetupList } from '../state/hooks';
 import { useSubmit } from '../state/useSubmit';
@@ -18,6 +20,14 @@ export function MeetupsPage() {
   const actions = useActions();
   const feedback = useFeedback();
   const { error, run } = useSubmit();
+  const { newMeetupId, clearNewMeetup } = useCelebrate();
+  // Kept for this visit so the card's class stays put (removing it would restart the stagger
+  // animation); cleared in the provider so the next visit is a normal one.
+  const enteringId = useRef(newMeetupId);
+
+  useEffect(() => {
+    if (newMeetupId) clearNewMeetup();
+  }, [newMeetupId, clearNewMeetup]);
 
   const swipeDelete = async (id: string, title: string) => {
     if (await run(() => actions.deleteMeetup(id))) {
@@ -52,7 +62,18 @@ export function MeetupsPage() {
       ) : (
         <ul className="stagger space-y-2">
           {items.map(({ meetup, totalSpentMinor, participants, expenseCount }) => (
-            <li key={meetup.id}>
+            <li
+              key={meetup.id}
+              className={meetup.id === enteringId.current ? 'meetup-new relative' : undefined}
+            >
+              {meetup.id === enteringId.current && (
+                <span
+                  aria-hidden="true"
+                  className="meetup-new-accent pointer-events-none absolute -top-2 right-3 z-10 text-xl"
+                >
+                  🎉
+                </span>
+              )}
               <SwipeToDelete
                 className="rounded-card shadow-card"
                 label={az.common.delete}

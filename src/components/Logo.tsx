@@ -16,7 +16,7 @@ export function Logo() {
   return (
     <span className="flex items-center gap-2.5">
       <LogoMark />
-      <span className="flex flex-col leading-none">
+      <span data-header-title className="flex flex-col leading-none">
         <span className="text-lg font-bold tracking-tight text-ink">{az.app.name}</span>
         <span className="mt-0.5 text-xs text-ink-muted">{az.app.tagline}</span>
       </span>
