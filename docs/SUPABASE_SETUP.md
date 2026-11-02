@@ -25,21 +25,32 @@ The app only ever uses the project URL and the **publishable** key. Never put an
    run it. The table at the end must show an email next to all four names. If one is empty, fix
    the email and run the file again.
 
-5. **Verify.** Paste [`supabase/verify.sql`](../supabase/verify.sql) into a new query and run
+5. **Run the admin and cards migration.** Paste all of
+   [`supabase/migration_003_admin_and_cards.sql`](../supabase/migration_003_admin_and_cards.sql)
+   into a new query and click **Run**. Then choose the admin: copy the `update` statement near the end
+   of the file into a new query, replace `EMAIL_HERE`
+   with the admin's login email (in the query only, do not save it in the file) and run it,
+   followed by the check query below it. Exactly one name should show `is_admin = true`. Only the
+   SQL Editor can change who is admin; to move the role, set it to `false` on the old row and
+   `true` on the new one.
+
+6. **Verify.** Paste [`supabase/verify.sql`](../supabase/verify.sql) into a new query and run
    the queries one at a time. Each one has a comment saying what you should see.
 
-6. **Safety check: no access without login.** In a terminal in the project folder, run:
+7. **Safety check: no access without login.** In a terminal in the project folder, run:
 
    ```bash
    set -a; source .env; set +a
    curl -s "$VITE_SUPABASE_URL/rest/v1/members?select=*" -H "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY"
+   curl -s "$VITE_SUPABASE_URL/rest/v1/member_cards?select=*" -H "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY"
    ```
 
-   The result must be an error such as `permission denied for table members`, or `[]`. If you
-   see any member names, **stop** and do not use the app yet: re-run `schema.sql` and step 5.
+   Each result must be an error such as `permission denied for table members`, or `[]`. If you
+   see any member names or card numbers, **stop** and do not use the app yet: re-run `schema.sql`,
+   then the migrations (step 5 again for 003), then step 6.
    (The commands read the values from `.env` without printing them.)
 
-7. **Run the app.** Make sure `.env` contains `VITE_SUPABASE_URL` and
+8. **Run the app.** Make sure `.env` contains `VITE_SUPABASE_URL` and
    `VITE_SUPABASE_PUBLISHABLE_KEY` (see `.env.example`), then run `npm run dev`, open
    <http://localhost:5173> and sign in with one of the four accounts.
 
@@ -50,10 +61,17 @@ order, in the SQL Editor:
 
 - `supabase/migration_002_meetup_delete.sql`: without it, deleting or restoring a meetup in
   the app fails with "Server bu əməliyyat üçün hazır deyil".
+- `supabase/migration_003_admin_and_cards.sql`: admin-only member changes and payment cards. After
+  running it, choose the admin as described in step 5. Until someone is admin, nobody can rename
+  or add members from the app.
+
+**If you run `schema.sql` again, run migration 003 again right after it.** `schema.sql` restores
+the older policy that lets any group member add members. The admin flag itself is kept.
 
 ## Adding or changing people later
 
-- New person: create the user (step 2), then add a member in the app or in SQL, and link it with
+- New person: create the user (step 2), then add a member in the app (as the admin) or in SQL, and link it
+  with
   an `update public.members set user_id = ...` line as in `link_users.sql`. Only the SQL Editor
   can link accounts; the app cannot change `user_id`.
 - Forgotten password: there is no reset in the app. In **Authentication → Users**, open the user
