@@ -2,7 +2,10 @@ import {
   applyTransfers,
   computeBalances,
   computeBalancesForMeetup,
+  expenseMonthRange,
+  expenseSettlements,
   formatMoney,
+  monthlyExpenses,
   parseMoney,
   simplifyDebts,
   splitEqually,
@@ -11,7 +14,16 @@ import {
   type Transfer,
 } from '../../domain';
 import { az } from '../../i18n/az';
-import { expenses, ids, members, settlementAshrafToShahin } from './referenceScenario';
+import {
+  analyticsExpenses,
+  analyticsMeetups,
+  cycleExpenses,
+  cycleSettlements,
+  expenses,
+  ids,
+  members,
+  settlementAshrafToShahin,
+} from './referenceScenario';
 
 export interface Check {
   label: string;
@@ -146,6 +158,98 @@ export function runChecks(): Section[] {
     ...transferChecks(afterBalances),
   ];
 
+  // Settlement cycles: replay the timeline up to a point and look at each expense's batch.
+  const statusAt = (until: string) => {
+    const upTo = <T extends { createdAt: string }>(rows: T[]) =>
+      rows.filter((r) => r.createdAt <= until);
+    const map = expenseSettlements(members, upTo(cycleExpenses), upTo(cycleSettlements));
+    return Object.fromEntries(['e1', 'e2', 'e3'].map((id) => [id, map.get(id)?.batchId ?? 'open']));
+  };
+  const finalSettled = expenseSettlements(members, cycleExpenses, cycleSettlements);
+  const finalBalances = computeBalances(members, cycleExpenses, cycleSettlements);
+  const cycles: Check[] = [
+    eq('after e1, e2 (no repayments)', statusAt('2026-01-03T23:00:00.000Z'), {
+      e1: 'open',
+      e2: 'open',
+      e3: 'open',
+    }),
+    eq('after partial repayments s1..s3', statusAt('2026-01-05T23:00:00.000Z'), {
+      e1: 'open',
+      e2: 'open',
+      e3: 'open',
+    }),
+    eq('s4 brings balances to zero', statusAt('2026-01-06T23:00:00.000Z'), {
+      e1: 's4',
+      e2: 's4',
+      e3: 'open',
+    }),
+    eq('new expense e3 after the settlement', statusAt('2026-01-07T23:00:00.000Z'), {
+      e1: 's4',
+      e2: 's4',
+      e3: 'open',
+    }),
+    eq('s5 settles the second batch only', statusAt('2026-01-31T00:00:00.000Z'), {
+      e1: 's4',
+      e2: 's4',
+      e3: 's5',
+    }),
+    eq('settledAt of batch 1', finalSettled.get('e1')?.settledAt, '2026-01-06T10:00:00.000Z'),
+    eq(
+      'deleted expenses are never in a batch',
+      [finalSettled.has('e4'), finalSettled.has('e5')],
+      [false, false],
+    ),
+    eq(
+      'all zero ⇔ every active expense settled',
+      Object.values(finalBalances).every((v) => v === 0),
+      cycleExpenses.filter((e) => !e.deletedAt).every((e) => finalSettled.has(e.id)),
+    ),
+  ];
+
+  const month = monthlyExpenses('2026-01', members, analyticsExpenses, analyticsMeetups);
+  const february = monthlyExpenses('2026-02', members, analyticsExpenses, analyticsMeetups);
+  const shareSum = Object.values(month.byMember).reduce((a, b) => a + b, 0);
+  const daySum = month.days.reduce((a, d) => a + d.totalMinor, 0);
+  const bars = (m: typeof month) =>
+    m.days
+      .filter((d) => d.totalMinor > 0)
+      .map((d) => [d.date, d.totalMinor, d.meetups.map((x) => `${x.title} ${x.totalMinor}`)]);
+  const analytics: Check[] = [
+    eq('January total (no repayments, no deleted)', month.totalMinor, 18680),
+    eq('expense count', month.expenseCount, 7),
+    eq('one bar per day; meetups combined; same title on another day stays apart', bars(month), [
+      ['2026-01-01', 10000, ['Garden 10000']],
+      ['2026-01-02', 2000, ['PlayStation 2000']],
+      ['2026-01-03', 5180, ['Coffee 3000', 'Dinner 2180']],
+      ['2026-01-20', 1500, ['Garden 1500']],
+    ]),
+    eq('shares, not payments', month.byMember, {
+      [ids.ashraf]: 2500,
+      [ids.ayxan]: 4500,
+      [ids.shahin]: 7500,
+      [ids.seyid]: 4180,
+    }),
+    eq(
+      'Σ member shares = Σ bars = total',
+      [shareSum, daySum],
+      [month.totalMinor, month.totalMinor],
+    ),
+    eq('31 days in January', month.days.length, 31),
+    eq('February: by meetup date, not recording date', bars(february), [
+      ['2026-02-10', 4000, ['February 4000']],
+    ]),
+    eq(
+      'month range ignores the deleted meetup',
+      expenseMonthRange(analyticsExpenses, analyticsMeetups),
+      { first: '2026-01', last: '2026-02' },
+    ),
+    eq(
+      'empty month',
+      monthlyExpenses('2026-04', members, analyticsExpenses, analyticsMeetups).totalMinor,
+      0,
+    ),
+  ];
+
   return [
     { title: t.sections.money, checks: money },
     { title: t.sections.split, checks: split },
@@ -153,5 +257,7 @@ export function runChecks(): Section[] {
     { title: t.sections.overall, checks: overall },
     { title: t.sections.coffee, checks: coffee },
     { title: t.sections.settlement, checks: settlement },
+    { title: t.sections.cycles, checks: cycles },
+    { title: t.sections.analytics, checks: analytics },
   ];
 }

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BalanceBars } from '../components/BalanceBars';
+import { BalanceSettledSkeletonCelebration } from '../components/BalanceSettledSkeletonCelebration';
 import { Confetti } from '../components/Confetti';
+import { ExpenseAnalytics } from '../components/ExpenseAnalytics';
 import { ReceiptArt } from '../components/illustrations';
 import { PlusIcon } from '../components/icons';
-import { PaidChart } from '../components/PaidChart';
 import { buttonClass } from '../components/styles';
 import { TransferCards } from '../components/TransferCards';
 import { Card, EmptyState, SectionTitle } from '../components/ui';
@@ -14,14 +15,13 @@ import { useCountUp } from '../lib/motion';
 import { paymentLink } from '../lib/paymentLink';
 import { useCelebrate } from '../state/celebrate';
 import { useCelebration } from '../state/celebration';
-import { useAppData, useOverallSummary, usePaidByMember } from '../state/hooks';
+import { useAppData, useOverallSummary } from '../state/hooks';
 
 export function OverviewPage() {
   const { members, expenses, settlements } = useAppData();
   const { balances, transfers, totalSpentMinor, settled } = useOverallSummary();
   const hasData = expenses.some((e) => !e.deletedAt) || settlements.some((s) => !s.deletedAt);
   const celebration = useCelebration();
-  const paid = usePaidByMember();
   const { active: celebrating } = useCelebrate();
   const [confetti, setConfetti] = useState(false);
 
@@ -57,7 +57,7 @@ export function OverviewPage() {
       <h1 className="sr-only">{az.overview.title}</h1>
       {confetti && <Confetti onDone={() => setConfetti(false)} />}
       {settled && (
-        <section className="settle-in rounded-card bg-pos-soft p-5 text-center shadow-card ring-1 ring-pos/30">
+        <section className="settle-in relative overflow-hidden rounded-card bg-pos-soft p-5 text-center shadow-card ring-1 ring-pos/30">
           <p className="text-4xl" aria-hidden="true">
             🎉
           </p>
@@ -65,6 +65,16 @@ export function OverviewPage() {
             {az.overview.settledTitle}
           </p>
           <p className="mt-1 text-sm text-ink-soft">{az.overview.settledBody}</p>
+          {/* Dance floor: full banner width (so the skeletons can run in and out of view), below the text.
+              Mounted only while settled, so a new debt stops the party and its schedule. */}
+          <div className="relative -mx-5 -mb-2 mt-2 h-14 sm:h-16">
+            <div
+              aria-hidden="true"
+              className="absolute bottom-2 left-1/2 h-0.5 w-48 max-w-[60%] -translate-x-1/2 rounded-full bg-pos/20"
+            />
+            {/* Holds off while a full-screen payment celebration covers the page. */}
+            <BalanceSettledSkeletonCelebration paused={celebrating} />
+          </div>
         </section>
       )}
 
@@ -99,10 +109,7 @@ export function OverviewPage() {
         </Card>
       )}
 
-      <Card>
-        <SectionTitle hint={az.overview.paidHint}>{az.overview.paidTitle}</SectionTitle>
-        <PaidChart members={members} paid={paid} />
-      </Card>
+      <ExpenseAnalytics />
     </div>
   );
 }

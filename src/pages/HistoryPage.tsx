@@ -3,12 +3,13 @@ import { Link } from 'react-router-dom';
 import { Avatar } from '../components/Avatar';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { HistoryArt } from '../components/illustrations';
-import { ArrowRightIcon, TrashIcon } from '../components/icons';
+import { ArrowRightIcon, CheckIcon, TrashIcon } from '../components/icons';
 import { buttonClass } from '../components/styles';
 import { Badge, EmptyState, ErrorText, PageHeader } from '../components/ui';
 import { formatMoney } from '../domain';
 import { az } from '../i18n/az';
 import { formatDate } from '../lib/format';
+import { toIsoDate } from '../lib/localDate';
 import {
   useActions,
   useAppData,
@@ -149,6 +150,9 @@ export function HistoryPage() {
         <ul className="stagger space-y-2">
           {items.map((entry) => {
             const deleted = !!entry.item.deletedAt;
+            // Paid-off expenses step back a little (softer text, flat card); open ones stay prominent.
+            // Colors, not opacity, so the muted text keeps its contrast. The badge is unaffected.
+            const settled = entry.kind === 'expense' && !deleted && !!entry.settlement;
             const amount =
               entry.kind === 'expense'
                 ? entry.item.totalMinor
@@ -160,6 +164,7 @@ export function HistoryPage() {
                 <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-ink-muted">
                   {kindLabel[entry.kind]}
                   {deleted && <Badge>{az.common.deleted}</Badge>}
+                  {entry.kind === 'expense' && !deleted && <SettledBadge entry={entry} />}
                   {isAdmin && !deleted && (
                     <button
                       type="button"
@@ -174,12 +179,18 @@ export function HistoryPage() {
                 </div>
                 <div className="flex items-start gap-3">
                   <div
-                    className={`min-w-0 flex-1 ${deleted ? 'line-through decoration-ink-muted' : ''}`}
+                    className={`min-w-0 flex-1 ${deleted ? 'line-through decoration-ink-muted' : ''} ${
+                      settled ? 'text-ink-soft' : ''
+                    }`}
                   >
                     {renderBody(entry)}
                   </div>
                   {amount !== null && (
-                    <span className="tabular shrink-0 font-semibold">{formatMoney(amount)}</span>
+                    <span
+                      className={`tabular shrink-0 ${settled ? 'font-medium text-ink-soft' : 'font-semibold'}`}
+                    >
+                      {formatMoney(amount)}
+                    </span>
                   )}
                 </div>
                 {deleted && (
@@ -201,7 +212,9 @@ export function HistoryPage() {
                   className={`rounded-card p-4 ring-1 ${
                     deleted
                       ? 'bg-surface-2 text-ink-muted ring-line'
-                      : 'bg-surface shadow-card ring-line'
+                      : settled
+                        ? 'bg-surface ring-line'
+                        : 'bg-surface shadow-card ring-line'
                   }`}
                 >
                   {card}
@@ -229,5 +242,37 @@ export function HistoryPage() {
             : az.meetupDetail.deleteExpenseBody(labelOf(entryToDelete)))}
       </ConfirmDialog>
     </>
+  );
+}
+
+/**
+ * Whether an active expense is already paid off (the group's balances returned to zero after it
+ * was recorded) or is still part of the open debts. The settlement date is in the tooltip.
+ */
+function SettledBadge({ entry }: { entry: Extract<HistoryItem, { kind: 'expense' }> }) {
+  const settledAt = entry.settlement?.settledAt;
+  if (settledAt) {
+    const hint = t.settledOn(formatDate(toIsoDate(new Date(settledAt))));
+    return (
+      <span
+        title={hint}
+        className="inline-flex items-center gap-1 rounded-full bg-pos-soft px-2 py-0.5 text-xs font-medium normal-case tracking-normal text-pos"
+      >
+        <span className="[&>svg]:h-3 [&>svg]:w-3" aria-hidden="true">
+          <CheckIcon />
+        </span>
+        {t.settled}
+        <span className="sr-only">. {hint}</span>
+      </span>
+    );
+  }
+  return (
+    <span
+      title={t.unsettledHint}
+      className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium normal-case tracking-normal text-ink-soft ring-1 ring-line"
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-neg-bar" aria-hidden="true" />
+      {t.unsettled}
+    </span>
   );
 }

@@ -1,7 +1,7 @@
 import type { Balances, Expense, Id, Member, Settlement } from './types';
 import { sortMembers } from './members';
 
-function emptyBalances(members: readonly Member[]): Balances {
+export function emptyBalances(members: readonly Member[]): Balances {
   const balances: Balances = {};
   for (const m of sortMembers(members)) balances[m.id] = 0;
   return balances;
@@ -11,11 +11,22 @@ function add(balances: Balances, memberId: Id, delta: number): void {
   balances[memberId] = (balances[memberId] ?? 0) + delta;
 }
 
+/** One expense's effect on balances: payer += total, each share holder -= share. */
+export function applyExpense(balances: Balances, e: Expense): void {
+  add(balances, e.paidByMemberId, e.totalMinor);
+  for (const s of e.shares) add(balances, s.memberId, -s.amountMinor);
+}
+
+/** One settlement's effect on balances: from A to B of x means A += x, B -= x. */
+export function applySettlement(balances: Balances, s: Settlement): void {
+  add(balances, s.fromMemberId, s.amountMinor);
+  add(balances, s.toMemberId, -s.amountMinor);
+}
+
 function applyExpenses(balances: Balances, expenses: readonly Expense[]): void {
   for (const e of expenses) {
     if (e.deletedAt) continue;
-    add(balances, e.paidByMemberId, e.totalMinor);
-    for (const s of e.shares) add(balances, s.memberId, -s.amountMinor);
+    applyExpense(balances, e);
   }
 }
 
@@ -40,8 +51,7 @@ export function computeBalances(
   applyExpenses(balances, expenses);
   for (const s of settlements) {
     if (s.deletedAt) continue;
-    add(balances, s.fromMemberId, s.amountMinor);
-    add(balances, s.toMemberId, -s.amountMinor);
+    applySettlement(balances, s);
   }
   sanityCheck(balances, 'overall');
   return balances;

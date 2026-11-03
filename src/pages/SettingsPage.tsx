@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Avatar } from '../components/Avatar';
-import { BackupPanel } from '../components/BackupPanel';
+// Backup is temporarily disabled; see the note above <ThemeCard /> below.
+// import { BackupPanel } from '../components/BackupPanel';
 import { ColorSwatches } from '../components/ColorSwatches';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { TrashIcon } from '../components/icons';
@@ -264,7 +265,14 @@ export function SettingsPage() {
 
       <ThemeCard />
 
-      <BackupPanel allowImport={!shared} />
+      {/*
+        "Ehtiyat nüsxə" (backup) is temporarily disabled: the section is not rendered, so none of
+        its export/import actions can run. The implementation is kept unchanged in
+        src/components/BackupPanel.tsx. To restore it, uncomment the BackupPanel import at the top
+        of this file and this line:
+
+        <BackupPanel allowImport={!shared} />
+      */}
 
       {/* Shared mode never hard-deletes anything, so there is no reset there. */}
       {!shared && (

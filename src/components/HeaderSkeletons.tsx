@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { MEMBER_PALETTE } from '../lib/memberColors';
 import { usePrefersReducedMotion } from '../lib/motion';
+import { bookStage, claimStage, releaseStage, unbookStage } from '../lib/skeletonStage';
 
 const FIRST_RUN_MS = 3_000;
 const EVERY_MS = 15_000;
@@ -99,7 +100,8 @@ const RUNNERS: { name: string; cycle: number; accent: ReactNode }[] = [
 
 /**
  * Four skeletons run over the header, from the start of the title to the end of the nav (on mobile,
- * to the header's right edge): first 3 s after the app is ready, then every 15 s. Between runs nothing is rendered, so the header stays static. A run
+ * to the header's right edge): first 3 s after the app is ready, then every 15 s. Shares the stage
+ * with the banner skeletons via lib/skeletonStage, so the two never play at once. Between runs nothing is rendered, so the header stays static. A run
  * due in a background tab is skipped, not queued, and a run never starts over another one.
  * Purely decorative: it cannot be focused or clicked.
  */
@@ -114,14 +116,20 @@ export function HeaderSkeletons({ ready }: { ready: boolean }) {
     let interval = 0;
     let endTimer = 0;
     const run = () => {
+      // Tell the banner skeletons when the next run is due, so they stay clear of it.
+      bookStage('header', EVERY_MS, SEQUENCE_MS);
       if (isRunning.current || document.hidden) return;
+      // Has priority over the banner; only a banner run already in progress makes it skip this one.
+      if (claimStage('header', SEQUENCE_MS, { priority: true }) !== 0) return;
       isRunning.current = true;
       setRunning(true);
       endTimer = window.setTimeout(() => {
         isRunning.current = false;
         setRunning(false);
+        releaseStage('header');
       }, SEQUENCE_MS);
     };
+    bookStage('header', FIRST_RUN_MS, SEQUENCE_MS);
     const firstTimer = window.setTimeout(() => {
       run();
       interval = window.setInterval(run, EVERY_MS);
@@ -132,6 +140,8 @@ export function HeaderSkeletons({ ready }: { ready: boolean }) {
       window.clearTimeout(endTimer);
       isRunning.current = false;
       setRunning(false);
+      releaseStage('header');
+      unbookStage('header');
     };
   }, [reduced, ready]);
 

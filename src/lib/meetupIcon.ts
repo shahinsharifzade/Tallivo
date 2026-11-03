@@ -1,12 +1,13 @@
 // Emoji for a meetup, guessed from its title. Edit the keyword map to add more.
 
 const ICONS: [emoji: string, keywords: string[]][] = [
-  ['☕', ['kafe', 'qəhvə', 'coffee', 'cafe', 'çay', 'latte']],
+  ['☕', ['qəhvə', 'coffee', 'cafe', 'çay', 'latte', 'kofe', 'kafe']],
   ['🎮', ['playstation', 'ps5', 'ps4', 'oyun', 'game', 'fifa', 'xbox']],
   ['🌳', ['bağ', 'park', 'piknik', 'picnic', 'garden', 'təbiət', 'meşə']],
   ['🍽️', ['restoran', 'restaurant', 'yemək', 'nahar', 'dinner', 'lunch', 'food']],
   ['🎬', ['kino', 'film', 'cinema', 'movie']],
-  ['🚕', ['taksi', 'taxi', 'yol', 'uber', 'bolt']],
+  ['🚕', ['taksi', 'taxi', 'yol', 'uber', 'bolt', 'benzin']],
+  ['🎵', ['konsert', 'concert', 'music', 'musiqi', 'spotify']],
 ];
 
 const FALLBACK = '📍';

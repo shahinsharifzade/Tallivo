@@ -3,17 +3,21 @@ import { useContext, useMemo } from 'react';
 import {
   computeBalances,
   computeBalancesForMeetup,
+  expenseMonthRange,
+  expenseSettlements,
   involvedMemberIds,
   isMemberReferenced,
+  monthlyExpenses,
   participantIds,
   simplifyDebts,
   sortMembers,
-  totalPaidByMember,
   totalSpent,
   type Expense,
+  type ExpenseSettlement,
   type Id,
   type Meetup,
   type Settlement,
+  type YearMonthKey,
 } from '../domain';
 import type { AppActions } from './actions';
 import { useAccount, useBackend } from './backend';
@@ -56,10 +60,31 @@ export function useOverallSummary() {
   }, [members, expenses, settlements]);
 }
 
-/** memberId -> total paid for (non-deleted) expenses. */
-export function usePaidByMember() {
-  const { members, expenses } = useAppData();
-  return useMemo(() => totalPaidByMember(members, expenses), [members, expenses]);
+/**
+ * One month's expense totals by meetup date: per day (each meetup's expenses combined), and each
+ * member's own shares. Repayments never count.
+ */
+export function useMonthlyExpenses(month: YearMonthKey) {
+  const { members, expenses, meetups } = useAppData();
+  return useMemo(
+    () => monthlyExpenses(month, members, expenses, meetups),
+    [month, members, expenses, meetups],
+  );
+}
+
+/** First and last month (by meetup date) with a counted expense (null when there is none). */
+export function useExpenseMonthRange() {
+  const { expenses, meetups } = useAppData();
+  return useMemo(() => expenseMonthRange(expenses, meetups), [expenses, meetups]);
+}
+
+/** expenseId -> settlement batch, for active expenses already paid off (see settlementCycles). */
+export function useExpenseSettlements() {
+  const { members, expenses, settlements } = useAppData();
+  return useMemo(
+    () => expenseSettlements(members, expenses, settlements),
+    [members, expenses, settlements],
+  );
 }
 
 /**
@@ -141,7 +166,14 @@ export function useReferencedMemberIds() {
 }
 
 export type HistoryItem =
-  | { kind: 'expense'; at: string; item: Expense; meetup: Meetup | undefined }
+  | {
+      kind: 'expense';
+      at: string;
+      item: Expense;
+      meetup: Meetup | undefined;
+      /** Set when the expense is paid off; undefined while it is still part of open debts. */
+      settlement: ExpenseSettlement | undefined;
+    }
   | { kind: 'settlement'; at: string; item: Settlement }
   | { kind: 'meetup'; at: string; item: Meetup };
 
@@ -151,6 +183,7 @@ export type HistoryItem =
  */
 export function useHistory(): HistoryItem[] {
   const { meetups, expenses, settlements } = useAppData();
+  const settled = useExpenseSettlements();
   return useMemo(() => {
     const meetupById = new Map(meetups.map((m) => [m.id, m]));
     const items: HistoryItem[] = [
@@ -159,6 +192,7 @@ export function useHistory(): HistoryItem[] {
         at: e.createdAt,
         item: e,
         meetup: meetupById.get(e.meetupId),
+        settlement: settled.get(e.id),
       })),
       ...settlements.map((s) => ({ kind: 'settlement' as const, at: s.createdAt, item: s })),
       ...meetups
@@ -166,5 +200,5 @@ export function useHistory(): HistoryItem[] {
         .map((m) => ({ kind: 'meetup' as const, at: m.createdAt, item: m })),
     ];
     return items.sort((a, b) => b.at.localeCompare(a.at));
-  }, [meetups, expenses, settlements]);
+  }, [meetups, expenses, settlements, settled]);
 }

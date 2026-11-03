@@ -505,6 +505,414 @@
   }
 }
 
+/* ---- "Hesab bərabər!" banner skeletons (BalanceSettledSkeletonCelebration).
+   Independent of the header skeletons above: own classes, own keyframes, nothing shared.
+   Phases are switched by the component (.bsk-enter → .bsk-dance → .bsk-exit). ---- */
+.bsk-spot {
+  --bsk-w: 24px;
+  width: var(--bsk-w);
+  height: 32px;
+  left: calc(50% + var(--bsk-at) - var(--bsk-w) / 2);
+}
+/* Side by side on the dance floor below the subtitle. */
+.bsk-spot-a {
+  --bsk-at: -60px;
+}
+.bsk-spot-b {
+  --bsk-at: -20px;
+}
+.bsk-spot-c {
+  --bsk-at: 20px;
+}
+.bsk-spot-d {
+  --bsk-at: 60px;
+}
+@media (min-width: 640px) {
+  .bsk-spot {
+    --bsk-w: 28px;
+    height: 37px;
+  }
+  .bsk-spot-a {
+    --bsk-at: -72px;
+  }
+  .bsk-spot-b {
+    --bsk-at: -24px;
+  }
+  .bsk-spot-c {
+    --bsk-at: 24px;
+  }
+  .bsk-spot-d {
+    --bsk-at: 72px;
+  }
+}
+.bsk-body {
+  transform-origin: 50% 100%;
+}
+
+/* Limbs: transform-box/origin match the 24×32 artwork. The far limb runs half a beat behind. */
+.bsk-leg,
+.bsk-leg-lower,
+.bsk-arm,
+.bsk-arm-lower,
+.bsk-bob {
+  transform-box: view-box;
+  animation-duration: var(--bsk-cycle);
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+.bsk-back {
+  animation-delay: calc(var(--bsk-cycle) / -2);
+}
+.bsk-leg {
+  transform-origin: 12px 20px;
+}
+.bsk-leg-lower {
+  transform-origin: 12px 25px;
+}
+.bsk-arm {
+  transform-origin: 12px 12px;
+}
+.bsk-arm-lower {
+  transform-origin: 12px 17px;
+}
+
+/* -- Running (entering and leaving): bouncy strides. -- */
+.bsk-enter .bsk-leg,
+.bsk-exit .bsk-leg {
+  animation-name: bsk-leg-run;
+}
+.bsk-enter .bsk-leg-lower,
+.bsk-exit .bsk-leg-lower {
+  animation-name: bsk-leg-lower-run;
+}
+.bsk-enter .bsk-arm,
+.bsk-exit .bsk-arm {
+  animation-name: bsk-arm-run;
+}
+.bsk-enter .bsk-arm-lower,
+.bsk-exit .bsk-arm-lower {
+  animation-name: bsk-arm-lower-run;
+}
+.bsk-enter .bsk-body,
+.bsk-exit .bsk-body {
+  animation: bsk-bounce calc(var(--bsk-cycle) * 2) ease-in-out infinite;
+}
+.bsk-enter .bsk-body-b,
+.bsk-exit .bsk-body-b {
+  animation-name: bsk-bounce-tilt;
+}
+/* The two coming from the right look where they are going. */
+.bsk-enter .bsk-track-c .bsk-face,
+.bsk-enter .bsk-track-d .bsk-face {
+  transform: scaleX(-1);
+}
+
+.bsk-enter .bsk-track {
+  animation: bsk-in-left 1000ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+.bsk-enter .bsk-track-b {
+  animation-duration: 1150ms;
+  animation-delay: 100ms;
+}
+.bsk-enter .bsk-track-c {
+  animation-name: bsk-in-right;
+  animation-duration: 1050ms;
+  animation-delay: 50ms;
+}
+.bsk-enter .bsk-track-d {
+  animation-name: bsk-in-right;
+  animation-duration: 1250ms;
+  animation-delay: 150ms;
+}
+.bsk-exit .bsk-track {
+  animation: bsk-out 1000ms cubic-bezier(0.5, 0, 0.8, 0.6) both;
+}
+.bsk-exit .bsk-track-b {
+  animation-duration: 1100ms;
+  animation-delay: 80ms;
+}
+.bsk-exit .bsk-track-c {
+  animation-duration: 1050ms;
+  animation-delay: 40ms;
+}
+.bsk-exit .bsk-track-d {
+  animation-duration: 1150ms;
+  animation-delay: 150ms;
+}
+/* Track travel is a % of the banner, so it is off-screen at every width. */
+@keyframes bsk-in-left {
+  from {
+    transform: translateX(-65%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes bsk-in-right {
+  from {
+    transform: translateX(65%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes bsk-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(90%);
+  }
+}
+@keyframes bsk-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes bsk-bounce-tilt {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(6deg);
+  }
+}
+@keyframes bsk-leg-run {
+  0%,
+  100% {
+    transform: rotate(-42deg);
+  }
+  50% {
+    transform: rotate(34deg);
+  }
+}
+@keyframes bsk-leg-lower-run {
+  0%,
+  100% {
+    transform: rotate(18deg);
+  }
+  50% {
+    transform: rotate(78deg);
+  }
+}
+@keyframes bsk-arm-run {
+  0%,
+  100% {
+    transform: rotate(38deg);
+  }
+  50% {
+    transform: rotate(-44deg);
+  }
+}
+@keyframes bsk-arm-lower-run {
+  0%,
+  100% {
+    transform: rotate(-30deg);
+  }
+  50% {
+    transform: rotate(-80deg);
+  }
+}
+
+/* -- Dancing: one move each. -- */
+/* a: jumps on the spot, arms up in a V. */
+.bsk-dance .bsk-body-a {
+  animation: bsk-jump 460ms ease-in-out infinite;
+}
+.bsk-dance .bsk-track-a .bsk-arm {
+  animation: bsk-arms-v 460ms ease-in-out infinite;
+}
+.bsk-dance .bsk-track-a .bsk-arm.bsk-back {
+  animation-name: bsk-arms-v-back;
+  animation-delay: 0s;
+}
+.bsk-dance .bsk-track-a .bsk-leg {
+  animation: bsk-legs-tuck 460ms ease-in-out infinite;
+}
+.bsk-dance .bsk-track-a .bsk-leg.bsk-back {
+  animation-name: bsk-legs-tuck-back;
+  animation-delay: 0s;
+}
+/* b: spins like a top, arms out. */
+.bsk-dance .bsk-body-b {
+  transform-origin: 50% 55%;
+  animation: bsk-spin 820ms linear infinite;
+}
+.bsk-dance .bsk-track-b .bsk-arm {
+  transform: rotate(95deg);
+}
+.bsk-dance .bsk-track-b .bsk-arm.bsk-back {
+  transform: rotate(-95deg);
+}
+.bsk-dance .bsk-track-b .bsk-leg {
+  transform: rotate(-12deg);
+}
+.bsk-dance .bsk-track-b .bsk-leg.bsk-back {
+  transform: rotate(12deg);
+}
+/* c: sways side to side, stepping and swinging its arms. */
+.bsk-dance .bsk-body-c {
+  animation: bsk-sway 720ms ease-in-out infinite;
+}
+.bsk-dance .bsk-track-c .bsk-leg {
+  animation: bsk-step 720ms ease-in-out infinite;
+}
+.bsk-dance .bsk-track-c .bsk-arm {
+  animation: bsk-arm-swing 720ms ease-in-out infinite;
+}
+.bsk-dance .bsk-track-c .bsk-back {
+  animation-delay: -360ms;
+}
+/* d: both arms up, pumping to the beat, hips bobbing. */
+.bsk-dance .bsk-body-d {
+  animation: bsk-groove 520ms ease-in-out infinite;
+}
+.bsk-dance .bsk-track-d .bsk-arm {
+  animation: bsk-arm-pump 260ms ease-in-out infinite alternate;
+}
+.bsk-dance .bsk-track-d .bsk-arm.bsk-back {
+  animation-delay: -260ms;
+}
+.bsk-dance .bsk-track-d .bsk-arm-lower {
+  animation: bsk-forearm-wave 260ms ease-in-out infinite alternate;
+}
+.bsk-dance .bsk-track-d .bsk-leg {
+  transform: rotate(-10deg);
+}
+.bsk-dance .bsk-track-d .bsk-leg.bsk-back {
+  transform: rotate(10deg);
+}
+@keyframes bsk-jump {
+  0%,
+  100% {
+    transform: translateY(0) scaleY(0.9);
+  }
+  15% {
+    transform: translateY(0) scaleY(1);
+  }
+  50% {
+    transform: translateY(-13px) scaleY(1.04);
+  }
+  85% {
+    transform: translateY(0) scaleY(1);
+  }
+}
+@keyframes bsk-arms-v {
+  0%,
+  100% {
+    transform: rotate(140deg);
+  }
+  50% {
+    transform: rotate(165deg);
+  }
+}
+@keyframes bsk-arms-v-back {
+  0%,
+  100% {
+    transform: rotate(-140deg);
+  }
+  50% {
+    transform: rotate(-165deg);
+  }
+}
+@keyframes bsk-legs-tuck {
+  0%,
+  30%,
+  70%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-28deg);
+  }
+}
+@keyframes bsk-legs-tuck-back {
+  0%,
+  30%,
+  70%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(28deg);
+  }
+}
+@keyframes bsk-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes bsk-sway {
+  0%,
+  100% {
+    transform: translateX(-6px) rotate(-11deg);
+  }
+  50% {
+    transform: translateX(6px) rotate(11deg);
+  }
+}
+@keyframes bsk-step {
+  0%,
+  100% {
+    transform: rotate(-18deg);
+  }
+  50% {
+    transform: rotate(18deg);
+  }
+}
+@keyframes bsk-arm-swing {
+  0%,
+  100% {
+    transform: rotate(70deg);
+  }
+  50% {
+    transform: rotate(-70deg);
+  }
+}
+@keyframes bsk-groove {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg);
+  }
+  25%,
+  75% {
+    transform: translateY(2px) scaleY(0.94) rotate(0deg);
+  }
+  50% {
+    transform: translateY(0) rotate(6deg);
+  }
+}
+@keyframes bsk-arm-pump {
+  from {
+    transform: rotate(150deg);
+  }
+  to {
+    transform: rotate(205deg);
+  }
+}
+@keyframes bsk-forearm-wave {
+  from {
+    transform: rotate(-25deg);
+  }
+  to {
+    transform: rotate(25deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bsk-lane * {
+    animation: none !important;
+  }
+}
+
 /* Keeps focused and scrolled-to elements clear of the sticky header. */
 html {
   scroll-padding-top: 5rem;
